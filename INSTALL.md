@@ -1,102 +1,126 @@
-# Installation patterns
+# Installation
 
-Four ways to consume skills-dungeon in another project. Listed in order of recommendation.
+Most of the time you want **one skill**, not the whole repo. Start here.
 
-## Pattern 1 — git submodule + selective symlink (recommended)
+## A note on git submodules
 
-Best for projects that want centralized updates and selective skill adoption per project.
+`git submodule` cannot mount a subdirectory of a repository — a submodule is
+always a *whole* repo at one path. So there is no way to "submodule just
+`skills/incremental-implementation-workflow`" while every skill lives in this
+one repo. What you can do:
 
-```bash
-# In the consuming project root
-git submodule add https://github.com/<owner>/skills-dungeon .claude/external/skills-dungeon
+- **Copy** a single skill folder in (Pattern 1) — simplest, no git link.
+- **Upload** a single `.skill` package (Pattern 2) — simplest for the Claude UI.
+- **Submodule the whole repo + `sparse-checkout`** so only the skill you want
+  is materialized on disk (Pattern 3) — if you want `git pull` updates.
 
-# Install just the skills you want
-.claude/external/skills-dungeon/scripts/install.sh \
-  incremental-implementation-workflow \
-  aws-deploy-and-iam-diagnostics
-```
+Claude Code loads skills only as **direct children of `.claude/skills/`**
+(`.claude/skills/<skill>/SKILL.md`). A skill nested any deeper is not loaded.
+That is why the submodule patterns still need a symlink.
 
-The script creates symlinks:
+---
 
-```
-.claude/skills/incremental-implementation-workflow -> ../external/skills-dungeon/skills/incremental-implementation-workflow
-.claude/skills/aws-deploy-and-iam-diagnostics      -> ../external/skills-dungeon/skills/aws-deploy-and-iam-diagnostics
-```
+## Pattern 1 — copy a single skill (recommended for one skill)
 
-The symlink is required because Claude Code loads skills only as direct children of `.claude/skills/`. A nested submodule path (`.claude/skills/external/...`) is not loaded.
-
-To update later:
+No git relationship, nothing to maintain. You re-copy when you want an update.
 
 ```bash
-cd .claude/external/skills-dungeon
-git pull
-# Symlinks already point at the updated content; no further action needed
+# From a clone or download of skills-dungeon, in the consuming project root:
+cp -r /path/to/skills-dungeon/skills/incremental-implementation-workflow \
+  .claude/skills/incremental-implementation-workflow
 ```
 
-To pin to a specific commit, use the usual submodule pinning (`git -C .claude/external/skills-dungeon checkout <sha>` then `git add` the gitlink in the parent repo).
-
-## Pattern 2 — git subtree
-
-Best for projects that prefer to vendor the skills-dungeon content inside their own repo (no submodule indirection, no separate clone step for collaborators).
-
-```bash
-git subtree add --prefix=.claude/external/skills-dungeon \
-  https://github.com/<owner>/skills-dungeon main --squash
-
-# Same symlink step as Pattern 1
-.claude/external/skills-dungeon/scripts/install.sh \
-  incremental-implementation-workflow
-```
-
-To update later:
-
-```bash
-git subtree pull --prefix=.claude/external/skills-dungeon \
-  https://github.com/<owner>/skills-dungeon main --squash
-```
-
-Trade-off: easier for collaborators (no `git submodule update --init`), but contributing changes back to upstream is more involved.
-
-## Pattern 3 — sparse checkout (clone only what you need)
-
-Best for projects on bandwidth- or storage-constrained CI environments where the full skills-dungeon is overkill.
+Or pull just that folder straight from GitHub without a full clone:
 
 ```bash
 git clone --filter=blob:none --no-checkout \
-  https://github.com/<owner>/skills-dungeon .claude/external/skills-dungeon
-
-cd .claude/external/skills-dungeon
-git sparse-checkout init --cone
-git sparse-checkout set skills/incremental-implementation-workflow scripts
+  https://github.com/<owner>/skills-dungeon /tmp/skills-dungeon
+cd /tmp/skills-dungeon
+git sparse-checkout set --no-cone skills/incremental-implementation-workflow
 git checkout main
-
-# Then symlink
-./scripts/install.sh incremental-implementation-workflow
+cp -r skills/incremental-implementation-workflow \
+  /path/to/your/project/.claude/skills/
 ```
 
-Trade-off: more setup complexity, less common in team workflows.
+Trade-off: no automatic update path.
 
-## Pattern 4 — direct .skill upload (no git relationship)
+## Pattern 2 — single `.skill` upload (no git relationship)
 
-Best for one-off use where you don't want a long-term link to this repo.
-
-Download a specific `.skill` file from `packaged/` (e.g. via `curl` against the raw GitHub URL, or by cloning and copying), then load it into Claude Code through its skill installation flow:
+Best for one-off use through the Claude Code skill installation flow.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/<owner>/skills-dungeon/main/packaged/incremental-implementation-workflow.skill \
   -o /tmp/incremental-implementation-workflow.skill
 
-# Then upload via Claude Code UI, or unzip into .claude/skills/ directly
+# Upload via the Claude Code UI, or unzip directly:
 unzip /tmp/incremental-implementation-workflow.skill -d .claude/skills/
 ```
 
-Trade-off: no version pinning, no automatic update path. You re-download manually when you want a newer version.
+Trade-off: no version pinning, no automatic update path.
+
+## Pattern 3 — submodule + sparse-checkout (one skill, with updates)
+
+Use this when you want `git pull` updates for a single skill. The submodule is
+still the whole repo, but `sparse-checkout` keeps only the one skill folder on
+disk; a symlink then exposes it where Claude Code expects it.
+
+```bash
+# In the consuming project root
+git submodule add https://github.com/<owner>/skills-dungeon .claude/external/skills-dungeon
+
+# Materialize only the skill you want
+git -C .claude/external/skills-dungeon sparse-checkout set --cone \
+  skills/incremental-implementation-workflow scripts
+
+# Expose it as a direct child of .claude/skills/
+.claude/external/skills-dungeon/scripts/install.sh incremental-implementation-workflow
+```
+
+`install.sh` creates:
+
+```
+.claude/skills/incremental-implementation-workflow -> ../external/skills-dungeon/skills/incremental-implementation-workflow
+```
+
+To update later:
+
+```bash
+cd .claude/external/skills-dungeon && git pull
+# The symlink already points at the updated content; nothing else to do.
+```
+
+Pin to a specific commit with normal submodule pinning
+(`git -C .claude/external/skills-dungeon checkout <sha>`, then `git add` the
+gitlink in the parent repo).
+
+## Pattern 4 — submodule + selective symlink (several skills, with updates)
+
+Same as Pattern 3 but for adopting **multiple** skills with one centralized,
+updatable copy. Skip `sparse-checkout` (or list every skill you want) and pass
+all of them to `install.sh`:
+
+```bash
+git submodule add https://github.com/<owner>/skills-dungeon .claude/external/skills-dungeon
+
+.claude/external/skills-dungeon/scripts/install.sh \
+  incremental-implementation-workflow \
+  aws-deploy-and-iam-diagnostics
+```
+
+To vendor the content inside your own repo instead of using a submodule
+(no `git submodule update --init` for collaborators), use `git subtree`:
+
+```bash
+git subtree add --prefix=.claude/external/skills-dungeon \
+  https://github.com/<owner>/skills-dungeon main --squash
+.claude/external/skills-dungeon/scripts/install.sh incremental-implementation-workflow
+```
 
 ## Decision matrix
 
 | Need | Pattern |
 |---|---|
-| Centralized updates across projects, selective skills per project | 1 (submodule) |
-| Collaborators should not need extra git steps | 2 (subtree) |
-| Minimize clone size for CI | 3 (sparse) |
-| One-time use, no long-term link | 4 (direct .skill) |
+| One skill, simplest possible, no updates | 1 (copy) |
+| One skill, one-off via the Claude Code UI | 2 (.skill upload) |
+| One skill, want `git pull` updates | 3 (submodule + sparse-checkout) |
+| Several skills, centralized updatable copy | 4 (submodule + symlink) |

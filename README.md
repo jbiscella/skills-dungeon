@@ -48,7 +48,7 @@ Each skill folder has its own `README.md` explaining when it adds value and when
 
 ## How to consume this in another project
 
-See `INSTALL.md` for the four installation patterns (git submodule, sparse checkout, direct copy, .skill upload). The default recommendation is **git submodule + selective symlink via `scripts/install.sh`**.
+Most of the time you want **one skill**, not the whole repo. The simplest path is to copy a single skill folder into your project's `.claude/skills/`, or upload one `.skill` package. See `INSTALL.md` for all four patterns, including submodule + sparse-checkout if you want `git pull` updates for a single skill.
 
 ## License
 
