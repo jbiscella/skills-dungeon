@@ -24,7 +24,7 @@ The contents are tuned to one user's working style (direct, conclusions-first, B
 │
 ├── INSTALL.md             # How to consume this in another project
 ├── CHANGELOG.md           # What changed when
-└── LICENSE                # MIT
+└── LICENSE                # 0BSD
 ```
 
 ## What's inside
@@ -52,7 +52,7 @@ See `INSTALL.md` for the four installation patterns (git submodule, sparse check
 
 ## License
 
-MIT. See `LICENSE`.
+BSD Zero Clause License (0BSD) — public-domain-equivalent, no attribution required. See `LICENSE`.
 
 ## Status
 
