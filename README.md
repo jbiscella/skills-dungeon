@@ -4,6 +4,15 @@
 [![Built for Claude Code](https://img.shields.io/badge/built%20for-Claude%20Code-d97757.svg)](https://claude.com/claude-code)
 [![Agent Skills](https://img.shields.io/badge/format-Agent%20Skills-555.svg)](https://docs.claude.com/en/docs/claude-code/skills)
 
+![claude-code](https://img.shields.io/badge/-claude--code-2b3137?style=flat-square)
+![agent-skills](https://img.shields.io/badge/-agent--skills-2b3137?style=flat-square)
+![ai-assisted-development](https://img.shields.io/badge/-ai--assisted--development-2b3137?style=flat-square)
+![java](https://img.shields.io/badge/-java-2b3137?style=flat-square)
+![micronaut](https://img.shields.io/badge/-micronaut-2b3137?style=flat-square)
+![aws](https://img.shields.io/badge/-aws-2b3137?style=flat-square)
+![bdd](https://img.shields.io/badge/-bdd-2b3137?style=flat-square)
+![developer-tooling](https://img.shields.io/badge/-developer--tooling-2b3137?style=flat-square)
+
 A personal stash of Claude Code skills, distilled from real work — not a framework, not a product.
 
 ## What this is
