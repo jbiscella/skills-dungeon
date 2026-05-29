@@ -2,6 +2,12 @@
 
 All notable changes to this repository are recorded here.
 
+## 2026-05-29
+
+### Skills
+
+- `three-amigos` — chat-time refinement skill for draft user stories and CLAUDE.md increments. Three role personas (Business Analyst, Tester, Technician) with targeted and round-table modes; round-table emits refined value clause, Gherkin scenarios, open questions, and out-of-scope. Designed to feed `incremental-implementation-workflow`.
+
 ## [Initial] — 2026-05-17
 
 First archive snapshot.
