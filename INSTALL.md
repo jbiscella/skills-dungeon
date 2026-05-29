@@ -19,7 +19,10 @@ one repo. What you can do:
 
 Claude Code loads skills only as **direct children of `.claude/skills/`**
 (`.claude/skills/<skill>/SKILL.md`). A skill nested any deeper is not loaded.
-That is why the Code submodule patterns still need a symlink.
+That is why the Code submodule patterns still need a symlink. (Loader
+behavior verified as of 2026-05-29 — Claude Code is under active
+development; if you see a skill in a nested path being loaded, re-check
+the docs before relying on it.)
 
 ---
 
@@ -29,7 +32,9 @@ Claude.ai chat skills live in `skills/chat/` and are installed exclusively
 through the Claude.ai UI. There is no filesystem loader — the runtime is the
 hosted Claude.ai service.
 
-Steps:
+Steps (verified as of 2026-05-29; the Claude.ai Skills UI is recent and the
+menu path may shift — when in doubt, search the
+[Claude help center](https://support.claude.com/) for "skills"):
 
 1. Open Claude.ai (web or desktop) → **Settings → Customize → Skills**.
 2. Click **+ Create skill** and upload the corresponding `.skill` from
@@ -40,8 +45,9 @@ The `.skill` archive must contain the skill folder at its root
 (`three-amigos/SKILL.md`), which is what `scripts/package.sh` produces by
 design.
 
-Plan support: Free, Pro, and Max plans can upload personal skills directly.
-Team and Enterprise require the org admin to enable Skills at the
+Plan support (verified as of 2026-05-29; Anthropic adjusts plan-feature
+matrices periodically): Free, Pro, and Max plans can upload personal skills
+directly. Team and Enterprise require the org admin to enable Skills at the
 organization level first; individual members then upload their own under
 **Settings → Customize → Skills**.
 

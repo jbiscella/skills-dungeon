@@ -79,7 +79,7 @@ cp -r skills/code/aws-deploy-and-iam-diagnostics \
   /path/to/your/project/.claude/skills/
 ```
 
-Claude Code loads any skill that lives as a direct child of `.claude/skills/`. For submodule setups, sparse-checkout updates, and the full pattern matrix, see [`INSTALL.md`](INSTALL.md).
+Claude Code loads any skill that lives as a direct child of `.claude/skills/` (verified as of 2026-05-29). For submodule setups, sparse-checkout updates, and the full pattern matrix, see [`INSTALL.md`](INSTALL.md).
 
 ## Repository structure
 
@@ -106,6 +106,17 @@ Claude Code loads any skill that lives as a direct child of `.claude/skills/`. F
 This is an archive of *my* working practices, not a neutral toolkit. The skills bake in specific opinions — outside-in BDD, mechanical verification over speculation, explicit governance of ambiguity — and they assume a `CLAUDE.md`-driven workflow. They were written for Java / Micronaut / AWS projects and reflect the failure modes I actually hit.
 
 Read a skill's `SKILL.md` and `README.md` before adopting it. Each one says when it adds value and when it's redundant. Take what fits, rewrite what doesn't, and don't expect it to track your stack — it tracks mine.
+
+## How to fork and adapt
+
+If a skill is close to what you want but doesn't fit your stack, fork it rather than negotiate with it. A few cheap rules that make the fork actually work:
+
+- **Replace stack-specific assumptions, don't paper over them.** Rewrite `micronaut-stack-hygiene` for Spring; replace AWS commands in `aws-deploy-and-iam-diagnostics` with the cloud you actually use. Half-translated skills behave worse than no skill.
+- **Drop skills your `CLAUDE.md` already covers.** Each skill names its redundancy conditions; honor them. A skill whose rules duplicate `CLAUDE.md` adds noise to context, not safety.
+- **Keep the stop conditions and the mechanical verification habits.** Those are the parts that earn the skill's place. "Stop and produce a clarification brief", "one CLI command per turn", "verify before stating" survive the stack change.
+- **Re-check the freshness notes.** Lines marked "verified as of YYYY-MM-DD" reflect external product behavior at that date — confirm against current docs before relying on them in your own fork.
+
+The skills are 0BSD licensed (`LICENSE`); attribution is not required. Bend them.
 
 ## License
 

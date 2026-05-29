@@ -9,6 +9,14 @@ A skill for resolving four classes of AWS problem that appear similar at the sur
 
 The skill exists because speculation is cheap and misleading on AWS. The right answer is almost always reachable by 2-4 CLI calls; speculation produces hypotheses that take 10x longer to disprove than to verify.
 
+## Minimum protocol
+
+**On load.** Read the exception body or symptom literally. Decide which of the four patterns matches: cross-identity permission diff (1), deploy-state chain (2), config-wiring audit (3), build-artifact provenance (4). Do not generalize the symptom.
+
+**Stop on.** `AccessDenied` raised by the diagnostic call itself (your credentials cannot investigate — say so, do not speculate). Exception body that names no action (escalate to support). Multiple patterns plausible — pick one, verify it mechanically, do not run them in parallel.
+
+**Expected output shape.** One CLI command per turn, wait for output, then either next command or named conclusion (root cause + the mechanical fix). Never bundle multiple commands; each output may invalidate the next.
+
 ## When this skill applies
 
 Active in any AWS-deployed project (Lambda, ECS, EKS, EC2) where a symptom is observed and the cause is not immediately obvious from application logs. The four patterns are independent; load the section that matches the symptom.
@@ -30,7 +38,7 @@ If a check fails with `AccessDenied` on the diagnostic call itself, the user's c
 
 A service call works when invoked from one AWS identity and fails with `AccessDeniedException` from another. Most common variant: the call works from the user's CLI session (typically with admin or developer-level access) but fails from a service role (Lambda execution role, EC2 instance role, etc.).
 
-A concrete real-world example: a Bedrock model invocation succeeded from the user's admin role but failed from a Lambda role with `AccessDeniedException: aws-marketplace:Subscribe`. The Lambda role had Bedrock invoke permissions but not Marketplace permissions, which newer Anthropic models require because they are served through Marketplace listings. This is the kind of cross-service permission split that is impossible to predict from documentation alone.
+A concrete real-world example: a Bedrock model invocation succeeded from the user's admin role but failed from a Lambda role with `AccessDeniedException: aws-marketplace:Subscribe`. The Lambda role had Bedrock invoke permissions but not Marketplace permissions, which newer Anthropic models require because they are served through Marketplace listings. This is the kind of cross-service permission split that is impossible to predict from documentation alone. (Bedrock/Marketplace coupling verified as of 2026-05-29; AWS reorganizes model access boundaries periodically — confirm with `simulate-principal-policy` rather than rely on this example.)
 
 ### Wrong path (avoid)
 
@@ -110,7 +118,7 @@ If any link in the chain breaks (artifact newer than function code, alias pointi
 
 ### SnapStart-specific edge case
 
-For Lambda with SnapStart, after publishing a new version AWS takes 60-120 seconds to build the snapshot. During this window, invocations against the alias may return `ResourceConflictException` even though the deploy "succeeded". This is transient. The check:
+For Lambda with SnapStart, after publishing a new version AWS takes 60-120 seconds to build the snapshot (verified as of 2026-05-29; AWS may tune this). During this window, invocations against the alias may return `ResourceConflictException` even though the deploy "succeeded". This is transient. The check:
 
 ```bash
 aws lambda get-function --function-name your-function:LIVE \

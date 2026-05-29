@@ -7,6 +7,14 @@ description: Verify that a Java fat/uber jar produced by Maven Shade Plugin is s
 
 A skill for catching the four cascading failure modes that turn a fat jar build into "compiles green, deploys broken". Each failure on its own is recoverable in minutes; cascading they cost hours, because each symptom masks the next.
 
+## Minimum protocol
+
+**On load.** Locate the shaded jar by exact name pattern (not `target/*.jar`). If absent, that is failure mode 1 — stop and report.
+
+**Stop on.** Any of the five checks (shaded-jar presence, size threshold, classpath-root resources, `META-INF/services` correctness, boot verification) fails. Do not "continue with what is there" — a broken jar makes downstream symptoms uninterpretable.
+
+**Expected output shape.** Pass/fail per check, in order, with the exact failed assertion and its specific remedy (which transformer, which pom.xml change, which dependency to add). On full pass, one explicit "verified" line — do not let the caller infer success from silence.
+
 ## When this skill applies
 
 Active in any Java project that produces a fat/uber jar via Maven Shade Plugin for deployment to:
@@ -123,7 +131,7 @@ For a Lambda entry point that requires an event, run it with a no-op handler inv
 
 To prevent failure #3 in the first place, the Shade configuration must include `ServicesResourceTransformer`. Without it, every `META-INF/services/X` from later JARs silently overwrites earlier ones, leaving only the last one in the merged artifact.
 
-The minimum required transformer block, for Maven Shade Plugin 3.6.x:
+The minimum required transformer block, for Maven Shade Plugin 3.6.x (verified as of 2026-05-29; check Maven Central for the latest patch):
 
 ```xml
 <plugin>
@@ -167,7 +175,7 @@ Two acceptable patterns:
 
 2. **As a Maven `exec-maven-plugin` step bound to the `verify` phase**: the script runs as part of every full build. Slower locally, but catches the issue before commit. Use this if the team has been bitten more than once.
 
-For Lambda specifically, you may want to add a third check: build the deployment package (zip the jar + any Lambda Layers' content) and verify the package size is within Lambda's limits (50 MB direct upload, 250 MB unzipped including layers). This is environment-specific and lives in the Lambda-deploy companion skill rather than here.
+For Lambda specifically, you may want to add a third check: build the deployment package (zip the jar + any Lambda Layers' content) and verify the package size is within Lambda's limits (50 MB direct upload, 250 MB unzipped including layers; verified as of 2026-05-29 — confirm with current AWS docs before raising or relying on these). This is environment-specific and lives in the Lambda-deploy companion skill rather than here.
 
 ## Anti-patterns
 
