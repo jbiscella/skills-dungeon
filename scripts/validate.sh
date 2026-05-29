@@ -13,6 +13,9 @@
 # 2. Frontmatter parses as YAML and contains non-empty 'name' and 'description'
 # 3. Description does not contain a literal colon ':' in YAML-ambiguous position
 # 4. Description does not contain angle brackets '<' or '>'
+# 5. Body contains a '## Minimum protocol' heading near the top — every
+#    SKILL.md in this repo carries the same minimum operational contract,
+#    so absence of the heading is treated as drift, not style.
 #
 # Repo-wide checks:
 # 5. Every skill folder has a matching packaged/<name>.skill, and every
@@ -59,7 +62,7 @@ for surface_dir in "$SKILLS_SRC"/*/; do
 
         # Delegate frontmatter parsing to scripts/check_skill.py so we use a
         # real YAML parser. The script prints WARN/ERROR lines; we tally them.
-        out="$(python3 "$SCRIPT_DIR/check_skill.py" "$skill_md" 2>&1)" || true
+        out="$(python3 "$SCRIPT_DIR/check_skill.py" --check-body "$skill_md" 2>&1)" || true
         rc=$?
         if [ -n "$out" ]; then
             echo "$out" | sed 's/^/  /'
