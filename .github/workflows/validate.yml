@@ -1,0 +1,58 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install PyYAML
+        run: pip install --upgrade pyyaml
+
+      - name: Run scripts/validate.sh (with URL probing)
+        run: scripts/validate.sh --check-urls
+
+      - name: Rebuild .skill packages
+        run: scripts/package.sh
+
+      - name: Verify packaged/ archives are committed and current
+        run: |
+          # Exclude staleness from the diff check: the zip mtime always
+          # changes after re-running package.sh. We only care that the
+          # contents of the archive match what's committed.
+          if git status --porcelain packaged/ | grep -v '\.skill$' | grep -q .; then
+            echo "Unexpected non-.skill changes under packaged/:" >&2
+            git status --porcelain packaged/ >&2
+            exit 1
+          fi
+          # Compare zip *contents*, not byte-identical archives.
+          rc=0
+          for pkg in packaged/*.skill; do
+            committed_sha="$(git show HEAD:"$pkg" | sha256sum | awk '{print $1}')"
+            current_sha="$(sha256sum "$pkg" | awk '{print $1}')"
+            if [ "$committed_sha" = "$current_sha" ]; then
+              continue
+            fi
+            # Bytes differ — compare archive contents (filenames + per-file sha).
+            tmpdir="$(mktemp -d)"
+            git show HEAD:"$pkg" > "$tmpdir/committed.zip"
+            (cd "$tmpdir" && unzip -q committed.zip -d committed && unzip -q "$GITHUB_WORKSPACE/$pkg" -d current)
+            if diff -r "$tmpdir/committed" "$tmpdir/current" >/dev/null; then
+              echo "OK: $pkg contents match committed archive (byte diff only)."
+            else
+              echo "FAIL: $pkg contents differ from committed archive — run scripts/package.sh and commit." >&2
+              rc=1
+            fi
+            rm -rf "$tmpdir"
+          done
+          exit $rc
