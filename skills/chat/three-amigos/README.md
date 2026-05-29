@@ -25,15 +25,21 @@ Concrete examples of refinement gaps this skill surfaces:
 
 ## Installation
 
-In a Claude Code project:
+This is a Claude.ai chat skill. Install it via the Claude.ai UI:
+
+1. Open Claude.ai (web or desktop) → **Settings → Customize → Skills**.
+2. Click **+ Create skill** and upload `three-amigos.skill` from this repo's `packaged/` directory.
+3. After upload, toggle the skill on.
+
+The `.skill` archive contains the `three-amigos/` folder at its root with `SKILL.md` and `README.md` inside — that's the exact shape Claude.ai expects.
+
+Available on Free, Pro, and Max plans; on Team and Enterprise the org admin enables Skills first and then individual members can upload their own under **Settings → Customize → Skills**.
+
+If you instead want to use this in Claude Code as a loose-style chat skill (uncommon but supported), drop the folder into `.claude/skills/`:
 
 ```bash
 unzip three-amigos.skill -d .claude/skills/
 ```
-
-For global use across all projects, replace `.claude/skills/` with `~/.claude/skills/`.
-
-For Claude chat (web or desktop) without Claude Code, paste the contents of `SKILL.md` into the conversation as a system message or upload the `.skill` package via the skill installation flow.
 
 ## Composability
 

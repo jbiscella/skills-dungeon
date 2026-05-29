@@ -4,6 +4,12 @@ All notable changes to this repository are recorded here.
 
 ## 2026-05-29
 
+### Structure
+
+- Split `skills/` by target surface: Claude Code skills moved under `skills/code/`, the Claude.ai chat skill `three-amigos` moved under `skills/chat/`. `packaged/` stays flat (one `.skill` per skill, named by bare skill name).
+- `scripts/validate.sh` and `scripts/package.sh` now walk two levels (surface + skill). `scripts/install.sh` only sources `skills/code/` — chat skills install through the Claude.ai UI, not via symlink.
+- Root `README.md` skills table gained a Surface column. `INSTALL.md` gained Pattern 0 documenting the Claude.ai chat upload flow (Settings → Customize → Skills → + Create skill → upload `.skill`) per the current 2026 Claude.ai UI.
+
 ### Skills
 
 - `three-amigos` — chat-time refinement skill for draft user stories and CLAUDE.md increments. Three role personas (Business Analyst, Tester, Technician) with targeted and round-table modes; round-table emits refined value clause, Gherkin scenarios, open questions, and out-of-scope. Designed to feed `incremental-implementation-workflow`.

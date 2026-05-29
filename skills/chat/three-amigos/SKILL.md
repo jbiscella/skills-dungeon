@@ -79,7 +79,7 @@ This artifact is the input shape consumed by `incremental-implementation-workflo
 
 ## 5. Handoff to clarification brief
 
-If a round-table cannot reach a refined spec — the three roles disagree, or a blocking unknown remains that the user cannot resolve in chat — produce the 8-section clarification brief defined in `skills/incremental-implementation-workflow/SKILL.md` §6, verbatim structure (Context, Source artifacts, Ambiguity statement, Why it blocks, Options considered, Recommendation, Question to reviewer, Out of scope). Do not duplicate that template here; reference it.
+If a round-table cannot reach a refined spec — the three roles disagree, or a blocking unknown remains that the user cannot resolve in chat — produce the 8-section clarification brief defined in `skills/code/incremental-implementation-workflow/SKILL.md` §6, verbatim structure (Context, Source artifacts, Ambiguity statement, Why it blocks, Options considered, Recommendation, Question to reviewer, Out of scope). Do not duplicate that template here; reference it.
 
 Trigger the handoff when:
 - The Technician flags a dependency the user has not confirmed and the discussion cannot proceed without it.
