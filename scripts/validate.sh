@@ -7,9 +7,10 @@
 # Skills live under a surface subfolder: skills/code/ for Claude Code
 # skills, skills/chat/ for Claude.ai chat skills. The validator walks both.
 #
-# Per-skill checks:
+# Per-skill checks (delegated to scripts/check_skill.py, which uses a real
+# YAML parser):
 # 1. SKILL.md exists in each skill folder
-# 2. Frontmatter has 'name' and 'description' fields
+# 2. Frontmatter parses as YAML and contains non-empty 'name' and 'description'
 # 3. Description does not contain a literal colon ':' in YAML-ambiguous position
 # 4. Description does not contain angle brackets '<' or '>'
 #
@@ -56,34 +57,21 @@ for surface_dir in "$SKILLS_SRC"/*/; do
             continue
         fi
 
-        frontmatter=$(awk '/^---$/{f++; next} f==1' "$skill_md")
-
-        if [ -z "$frontmatter" ]; then
-            echo "  ERROR: no frontmatter found (must start with ---)"
+        # Delegate frontmatter parsing to scripts/check_skill.py so we use a
+        # real YAML parser. The script prints WARN/ERROR lines; we tally them.
+        out="$(python3 "$SCRIPT_DIR/check_skill.py" "$skill_md" 2>&1)" || true
+        rc=$?
+        if [ -n "$out" ]; then
+            echo "$out" | sed 's/^/  /'
+            warnings=$((warnings + $(echo "$out" | grep -c '^WARN:' || true)))
+        fi
+        if [ "$rc" -eq 2 ]; then
             errors=$((errors + 1))
             continue
         fi
-
-        if ! echo "$frontmatter" | grep -q '^name:'; then
-            echo "  ERROR: frontmatter missing 'name:' field"
-            errors=$((errors + 1))
-        fi
-
-        if ! echo "$frontmatter" | grep -q '^description:'; then
-            echo "  ERROR: frontmatter missing 'description:' field"
-            errors=$((errors + 1))
-        fi
-
-        description=$(echo "$frontmatter" | grep '^description:' | sed 's/^description: *//')
-
-        if echo "$description" | grep -q '[<>]'; then
-            echo "  WARN: description contains '<' or '>'; may break some parsers"
-            warnings=$((warnings + 1))
-        fi
-
-        if echo "$description" | grep -qE ': '; then
-            echo "  WARN: description contains ': '; YAML parser may misinterpret as nested mapping"
-            warnings=$((warnings + 1))
+        if [ "$rc" -ne 0 ]; then
+            errors=$((errors + $(echo "$out" | grep -c '^ERROR:' || true)))
+            continue
         fi
 
         echo "  OK"
