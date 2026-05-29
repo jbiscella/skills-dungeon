@@ -131,7 +131,7 @@ For a Lambda entry point that requires an event, run it with a no-op handler inv
 
 To prevent failure #3 in the first place, the Shade configuration must include `ServicesResourceTransformer`. Without it, every `META-INF/services/X` from later JARs silently overwrites earlier ones, leaving only the last one in the merged artifact.
 
-The minimum required transformer block, for Maven Shade Plugin 3.6.x:
+The minimum required transformer block, for Maven Shade Plugin 3.6.x (verified as of 2026-05-29; check Maven Central for the latest patch):
 
 ```xml
 <plugin>
@@ -175,7 +175,7 @@ Two acceptable patterns:
 
 2. **As a Maven `exec-maven-plugin` step bound to the `verify` phase**: the script runs as part of every full build. Slower locally, but catches the issue before commit. Use this if the team has been bitten more than once.
 
-For Lambda specifically, you may want to add a third check: build the deployment package (zip the jar + any Lambda Layers' content) and verify the package size is within Lambda's limits (50 MB direct upload, 250 MB unzipped including layers). This is environment-specific and lives in the Lambda-deploy companion skill rather than here.
+For Lambda specifically, you may want to add a third check: build the deployment package (zip the jar + any Lambda Layers' content) and verify the package size is within Lambda's limits (50 MB direct upload, 250 MB unzipped including layers; verified as of 2026-05-29 — confirm with current AWS docs before raising or relying on these). This is environment-specific and lives in the Lambda-deploy companion skill rather than here.
 
 ## Anti-patterns
 

@@ -79,7 +79,7 @@ cp -r skills/code/aws-deploy-and-iam-diagnostics \
   /path/to/your/project/.claude/skills/
 ```
 
-Claude Code loads any skill that lives as a direct child of `.claude/skills/`. For submodule setups, sparse-checkout updates, and the full pattern matrix, see [`INSTALL.md`](INSTALL.md).
+Claude Code loads any skill that lives as a direct child of `.claude/skills/` (verified as of 2026-05-29). For submodule setups, sparse-checkout updates, and the full pattern matrix, see [`INSTALL.md`](INSTALL.md).
 
 ## Repository structure
 

@@ -102,7 +102,7 @@ For a file-based override across an entire test class:
 class MyServiceTest { ... }
 ```
 
-`@Property` from `io.micronaut.context.annotation.Property` works on class level and method level. When applied at method level on `@ConfigurationProperties`-bound beans, it triggers a `RefreshEvent` that updates the bound configuration; this works in Micronaut 4+ without additional setup. Verify behavior if your bean has complex re-binding requirements.
+`@Property` from `io.micronaut.context.annotation.Property` works on class level and method level. When applied at method level on `@ConfigurationProperties`-bound beans, it triggers a `RefreshEvent` that updates the bound configuration; this works in Micronaut 4+ without additional setup (verified against Micronaut 4.x as of 2026-05-29; reconfirm against your project's exact Micronaut minor). Verify behavior if your bean has complex re-binding requirements.
 
 ### Bean replacement in tests
 

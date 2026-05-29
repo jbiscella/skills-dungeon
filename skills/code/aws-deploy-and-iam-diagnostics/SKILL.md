@@ -38,7 +38,7 @@ If a check fails with `AccessDenied` on the diagnostic call itself, the user's c
 
 A service call works when invoked from one AWS identity and fails with `AccessDeniedException` from another. Most common variant: the call works from the user's CLI session (typically with admin or developer-level access) but fails from a service role (Lambda execution role, EC2 instance role, etc.).
 
-A concrete real-world example: a Bedrock model invocation succeeded from the user's admin role but failed from a Lambda role with `AccessDeniedException: aws-marketplace:Subscribe`. The Lambda role had Bedrock invoke permissions but not Marketplace permissions, which newer Anthropic models require because they are served through Marketplace listings. This is the kind of cross-service permission split that is impossible to predict from documentation alone.
+A concrete real-world example: a Bedrock model invocation succeeded from the user's admin role but failed from a Lambda role with `AccessDeniedException: aws-marketplace:Subscribe`. The Lambda role had Bedrock invoke permissions but not Marketplace permissions, which newer Anthropic models require because they are served through Marketplace listings. This is the kind of cross-service permission split that is impossible to predict from documentation alone. (Bedrock/Marketplace coupling verified as of 2026-05-29; AWS reorganizes model access boundaries periodically — confirm with `simulate-principal-policy` rather than rely on this example.)
 
 ### Wrong path (avoid)
 
@@ -118,7 +118,7 @@ If any link in the chain breaks (artifact newer than function code, alias pointi
 
 ### SnapStart-specific edge case
 
-For Lambda with SnapStart, after publishing a new version AWS takes 60-120 seconds to build the snapshot. During this window, invocations against the alias may return `ResourceConflictException` even though the deploy "succeeded". This is transient. The check:
+For Lambda with SnapStart, after publishing a new version AWS takes 60-120 seconds to build the snapshot (verified as of 2026-05-29; AWS may tune this). During this window, invocations against the alias may return `ResourceConflictException` even though the deploy "succeeded". This is transient. The check:
 
 ```bash
 aws lambda get-function --function-name your-function:LIVE \
