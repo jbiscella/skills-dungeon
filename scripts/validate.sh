@@ -27,7 +27,8 @@
 #    READMEs points to an existing file or directory in the repo.
 #
 # Usage:
-#   scripts/validate.sh
+#   scripts/validate.sh                # offline checks only (default)
+#   scripts/validate.sh --check-urls   # also probe absolute URLs in docs
 
 set -euo pipefail
 
@@ -35,6 +36,21 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TOOLKIT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 SKILLS_SRC="$TOOLKIT_ROOT/skills"
 PACKAGED_DIR="$TOOLKIT_ROOT/packaged"
+
+CHECK_URLS=0
+for arg in "$@"; do
+    case "$arg" in
+        --check-urls) CHECK_URLS=1 ;;
+        -h|--help)
+            sed -n '/^# Usage:/,/^$/p' "$0" | sed 's/^# \{0,1\}//'
+            exit 0
+            ;;
+        *)
+            echo "ERROR: unknown argument '$arg'. See --help." >&2
+            exit 2
+            ;;
+    esac
+done
 
 errors=0
 warnings=0
@@ -195,6 +211,63 @@ for f in "${doc_files[@]}"; do
         fi
     done < <(grep -oE "$link_re" "$f" | sed -E 's/.*\(([^)]+)\)/\1/')
 done
+
+# ----- Absolute URL probing (opt-in) -----------------------------------------
+
+if [ "$CHECK_URLS" -eq 1 ]; then
+    echo
+    echo "Probing absolute URLs (HEAD with 10s timeout)..."
+    if ! command -v curl >/dev/null 2>&1; then
+        echo "  ERROR: --check-urls requires curl in PATH"
+        errors=$((errors + 1))
+    else
+        # Collect all unique absolute URLs from the audited doc set.
+        urls="$(grep -hoE 'https?://[^)[:space:]"<>'\''`]+' \
+            "${doc_files[@]}" 2>/dev/null \
+            | sed 's/[.,;]\+$//' \
+            | sort -u)"
+
+        # User-Agent matters: shields.io and some help portals 403 the default.
+        ua='Mozilla/5.0 (skills-dungeon validate.sh URL probe)'
+        ok_count=0
+        warn_count=0
+        err_count=0
+        while IFS= read -r url; do
+            [ -n "$url" ] || continue
+            # -I = HEAD; some servers reject HEAD, so fall back to a 1-byte GET.
+            code="$(curl -sS -L -o /dev/null --max-time 10 -A "$ua" \
+                -w '%{http_code}' -I "$url" 2>/dev/null || echo "000")"
+            if [ "$code" = "000" ] || [ "$code" = "405" ] || [ "$code" = "501" ]; then
+                code="$(curl -sS -L -o /dev/null --max-time 10 -A "$ua" \
+                    -w '%{http_code}' --range 0-0 "$url" 2>/dev/null || echo "000")"
+            fi
+            case "$code" in
+                2*|3*)
+                    ok_count=$((ok_count + 1))
+                    ;;
+                401|403|405|429|5*)
+                    # Bot-detection, rate limits, and transient 5xx are
+                    # frequent false positives; treat as warnings.
+                    echo "  WARN: $url — HTTP $code (likely bot-detection or transient)"
+                    warnings=$((warnings + 1))
+                    warn_count=$((warn_count + 1))
+                    ;;
+                000)
+                    echo "  WARN: $url — network/timeout (status 000)"
+                    warnings=$((warnings + 1))
+                    warn_count=$((warn_count + 1))
+                    ;;
+                *)
+                    echo "  ERROR: $url — HTTP $code"
+                    errors=$((errors + 1))
+                    err_count=$((err_count + 1))
+                    ;;
+            esac
+        done <<< "$urls"
+        total=$((ok_count + warn_count + err_count))
+        echo "  Probed $total URL(s): $ok_count reachable, $warn_count flagged, $err_count broken"
+    fi
+fi
 
 # ----- Summary ----------------------------------------------------------------
 
