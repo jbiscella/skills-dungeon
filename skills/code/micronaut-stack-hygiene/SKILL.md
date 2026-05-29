@@ -7,6 +7,14 @@ description: Enforce Micronaut-correct annotations, imports, and bean patterns w
 
 A skill for keeping Java code in a Micronaut project free of Spring-isms and aligned with idiomatic Micronaut patterns. The cost of getting this wrong is that the code often compiles — Spring annotations on the classpath happily coexist with Micronaut ones — but behaves incorrectly at runtime, in ways that are hard to diagnose.
 
+## Minimum protocol
+
+**On load.** For every Java file in scope, scan imports for any `org.springframework.*` and for the banned annotations in §2. Cite the full FQN at first use of any annotation from the §1 map.
+
+**Stop on.** Existing Spring-isms in the file (`@Autowired`, `@Component`, `@Service`, `@SpringBootTest`, etc.) — that is drift, do not silently rewrite; report per `incremental-implementation-workflow` §12. Project `CLAUDE.md` §Code Style that contradicts this skill — CLAUDE.md wins.
+
+**Expected output shape.** Code with explicit Micronaut FQN imports, no Spring imports, constructor injection preferred over field injection. When ambiguous (`@Value`, `@Primary`, `@Property`), the resolved FQN is named in the surrounding text or a one-line comment.
+
 ## When this skill applies
 
 Active in any Java project where `io.micronaut.*` appears as a dependency. The framework is compile-time DI (AOT bean wiring, no runtime reflection), which makes the failure modes different from Spring: Spring annotations on a Micronaut class are silently ignored, not flagged at compile time.

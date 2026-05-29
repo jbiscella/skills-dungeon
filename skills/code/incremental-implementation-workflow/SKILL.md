@@ -7,6 +7,14 @@ description: Implement increments specified in a CLAUDE.md file driven by BDD/TD
 
 A workflow for taking a behaviorally-specified increment from a CLAUDE.md and implementing it under outside-in discipline. The user defines what needs to exist using BDD; you implement it using a prereq → red → green → refactor cycle, with explicit governance over failure handling and ambiguity.
 
+## Minimum protocol
+
+**On load.** Read CLAUDE.md from the repo root. Identify ADR, code hygiene rules, operational invariants, and the target increment (its value clause and Gherkin scenarios). Hold ADR and hygiene as constraints for every file you write.
+
+**Stop and produce a clarification brief (§6) on.** Missing or contradictory increment, missing Gherkin scenarios, ADR-violating change required, drift between code and spec, or a "done" increment that fails the §12 retroactive audit.
+
+**Expected output shape.** Per-phase commits following §7 (`[<id>][prereq|red|green|refactor|infra|docs|fix] <summary>`), with red discipline (§4), green DoD (§5), and overall DoD (§10) satisfied at each boundary. Operational invariants verified after green.
+
 ## When this skill applies
 
 The user has a CLAUDE.md with one or more increments. Each increment has:

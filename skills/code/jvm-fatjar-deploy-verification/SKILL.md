@@ -7,6 +7,14 @@ description: Verify that a Java fat/uber jar produced by Maven Shade Plugin is s
 
 A skill for catching the four cascading failure modes that turn a fat jar build into "compiles green, deploys broken". Each failure on its own is recoverable in minutes; cascading they cost hours, because each symptom masks the next.
 
+## Minimum protocol
+
+**On load.** Locate the shaded jar by exact name pattern (not `target/*.jar`). If absent, that is failure mode 1 — stop and report.
+
+**Stop on.** Any of the five checks (shaded-jar presence, size threshold, classpath-root resources, `META-INF/services` correctness, boot verification) fails. Do not "continue with what is there" — a broken jar makes downstream symptoms uninterpretable.
+
+**Expected output shape.** Pass/fail per check, in order, with the exact failed assertion and its specific remedy (which transformer, which pom.xml change, which dependency to add). On full pass, one explicit "verified" line — do not let the caller infer success from silence.
+
 ## When this skill applies
 
 Active in any Java project that produces a fat/uber jar via Maven Shade Plugin for deployment to:

@@ -9,6 +9,14 @@ A refinement skill for chat sessions where the user is still shaping a user stor
 
 The skill exists because implementation discipline downstream is wasted if the spec is fuzzy. `incremental-implementation-workflow` hard-stops on ambiguity and produces a clarification brief; `three-amigos` runs upstream so the brief is rarely needed.
 
+## Minimum protocol
+
+**On load.** Detect mode. A user prompt that names a single role ("BA — ...", "Tester, ...") is targeted; any other prompt that supplies a draft story is round-table (BA → Tester → Technician, in that order).
+
+**Stop on.** A blocking unknown that cannot be resolved in chat (Technician flags a missing dependency the user cannot confirm; BA and Tester disagree on actor or oracle; an answer points outside the conversation). Hand off to the 8-section clarification brief in `skills/code/incremental-implementation-workflow/SKILL.md` §6.
+
+**Expected output shape.** Targeted mode — response in the one named role's voice, asking that role's checklist questions back. Round-table mode — three role headings in fixed order, followed by `## Refinement output` with four sections (refined value clause, refined Given/When/Then, open questions with explicit answer criteria, out-of-scope decisions). Never paraphrase the output as prose.
+
 ## When this skill applies
 
 Active when the user is drafting, reviewing, or pre-flighting a story before implementation. Triggers:

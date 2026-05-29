@@ -9,6 +9,14 @@ A skill for resolving four classes of AWS problem that appear similar at the sur
 
 The skill exists because speculation is cheap and misleading on AWS. The right answer is almost always reachable by 2-4 CLI calls; speculation produces hypotheses that take 10x longer to disprove than to verify.
 
+## Minimum protocol
+
+**On load.** Read the exception body or symptom literally. Decide which of the four patterns matches: cross-identity permission diff (1), deploy-state chain (2), config-wiring audit (3), build-artifact provenance (4). Do not generalize the symptom.
+
+**Stop on.** `AccessDenied` raised by the diagnostic call itself (your credentials cannot investigate — say so, do not speculate). Exception body that names no action (escalate to support). Multiple patterns plausible — pick one, verify it mechanically, do not run them in parallel.
+
+**Expected output shape.** One CLI command per turn, wait for output, then either next command or named conclusion (root cause + the mechanical fix). Never bundle multiple commands; each output may invalidate the next.
+
 ## When this skill applies
 
 Active in any AWS-deployed project (Lambda, ECS, EKS, EC2) where a symptom is observed and the cause is not immediately obvious from application logs. The four patterns are independent; load the section that matches the symptom.
