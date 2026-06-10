@@ -2,6 +2,12 @@
 
 All notable changes to this repository are recorded here.
 
+## 2026-05-29 — learned-operations
+
+### Skills
+
+- `learned-operations` — cross-project shell-operation memory. Crystallises multi-step operations as bash scripts with a `draft → verified → trusted` state header; reuses matched scripts instead of regenerating commands. Targets user-home install at `~/.claude/skills/learned-operations/` and pairs with a one-paragraph trigger line in `~/.claude/CLAUDE.md`.
+
 ## 2026-05-29
 
 ### Structure
