@@ -269,6 +269,11 @@ if [ "$CHECK_URLS" -eq 1 ]; then
     fi
 fi
 
+# ----- Source/package and contract integrity ----------------------------------
+echo "Checking packaged content and static skill contracts..."
+python3 "$SCRIPT_DIR/check_packages.py" || errors=$((errors + 1))
+python3 "$SCRIPT_DIR/check_contracts.py" || errors=$((errors + 1))
+
 # ----- Summary ----------------------------------------------------------------
 
 echo

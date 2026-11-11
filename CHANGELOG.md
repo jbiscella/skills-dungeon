@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-11-11 — supervision reliability
+
+- Corrected Micronaut Test's `@MockBean` and conditional Spring integration handling.
+- Strengthened evidence requirements for fat-JAR bootstrap, AWS IAM simulations, Lambda package provenance and trusted operations.
+- Refined behavior/decision authority, scenario-oracle mapping, review scope and Three Amigos handoff.
+- Added `owner-question-review`, `scenario-integrity`, and `independent-verification` skills.
+- Added packaged-artifact content validation and contract fixture checks.
+
 All notable changes to this repository are recorded here.
 
 ## 2026-05-29 — learned-operations
