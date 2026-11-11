@@ -7,7 +7,7 @@ root = Path(__file__).resolve().parent.parent
 checks = {
     "skills/code/micronaut-stack-hygiene/SKILL.md": ["io.micronaut.test.annotation.MockBean", "micronaut-spring"],
     "skills/code/jvm-fatjar-deploy-verification/SKILL.md": ["positive bootstrap oracle", "UNVERIFIED"],
-    "skills/code/aws-deploy-and-iam-diagnostics/SKILL.md": ["live authorization proof", "deployment package"],
+    "skills/code/aws-deploy-and-iam-diagnostics/SKILL.md": ["live authorization proof", "package bytes"],
     "skills/code/incremental-implementation-workflow/SKILL.md": ["project-designated", "negative controls"],
     "skills/code/learned-operations/SKILL.md": ["Context is not covered by trust"],
     "skills/chat/three-amigos/SKILL.md": ["decision table", "eight sections"],
