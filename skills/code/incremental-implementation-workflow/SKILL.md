@@ -11,7 +11,7 @@ A workflow for taking a behaviorally-specified increment from a CLAUDE.md and im
 
 **On load.** Read CLAUDE.md from the repo root. Identify ADR, code hygiene rules, operational invariants, and the target increment (its value clause and Gherkin scenarios). Hold ADR and hygiene as constraints for every file you write.
 
-**Stop and produce a clarification brief (§6) on.** Missing or contradictory increment, missing Gherkin scenarios, ADR-violating change required, drift between code and spec, or a "done" increment that fails the §12 retroactive audit.
+**Stop and produce a clarification brief (§6) on.** Missing authority, behavior conflicts unresolved by project sources, unauthorized ADR changes, or scope-expanding regressions. Correct deterministic in-scope technical errors without inventing or weakening behavior.
 
 **Expected output shape.** Per-phase commits following §7 (`[<id>][prereq|red|green|refactor|infra|docs|fix] <summary>`), with red discipline (§4), green DoD (§5), and overall DoD (§10) satisfied at each boundary. Operational invariants verified after green.
 
@@ -125,7 +125,7 @@ When a test fails unexpectedly during the cycle, classify it before acting. The 
 - **Expected TDD failure.** A test you just wrote fails because the behavior isn't implemented yet. This is the red→green cycle working as intended. Continue.
 - **Pre-existing test failure.** A test that was green before your changes is now red. The fix would touch code outside the current increment. **Stop and report.** Do not extend scope.
 - **Unclear internal failure.** A test in the current increment fails for a reason that's not obvious. If the cause is isolable and internal to this increment, fix it and continue. If isolation requires touching code outside this increment, stop and report.
-- **Ambiguous spec.** A test failure suggests the Gherkin scenario is contradictory, underspecified, or inconsistent with another scenario. **Always stop and report.** Never paper over a spec problem by adjusting code or test until the spec is clarified.
+- **Ambiguous spec.** First consult the project's *explicitly designated* authority order (§13). If no authoritative answer resolves the behavior, stop; do not revise scenarios to fit implementation.
 - **Documented trade-off encountered.** The failure mode is one the spec explicitly accepts (e.g. "not atomic; documented trade-off", "single provider failure is logged and dropped"). **Do not fix.** The trade-off is a decision. Record that the trade-off was hit (log, commit message). Only revisit it if the user asks.
 
 State the classification in the commit message or in the chat update when the failure occurs. Do not bundle multiple classifications silently.
@@ -286,7 +286,7 @@ When a trigger fires, perform the minimum audit:
 
 1. List the Gherkin scenarios in the done increment from CLAUDE.md.
 2. For each scenario, locate the test that implements it (by feature/scenario name, by tag, or by the file structure convention the project uses).
-3. For at least the scenarios relevant to the current work, confirm the test fails when the implementation is removed (mental dry-run, or actual mutation if cheap). A test that passes regardless of the implementation does not enforce the scenario — it is dead coverage.
+3. For relevant scenarios, map each Then to actual assertions and, where safe and valuable, execute a targeted negative control. Mental dry-run is a hypothesis, not demonstrated test sensitivity; report UNVERIFIED until proven.
 4. If a scenario has no corresponding test, or the test does not actually fail without the implementation: **this is retroactive drift**. Stop and report via clarification brief (§6).
 
 The audit is scoped: do not expand it beyond the scenarios touched by the current work. The goal is to catch the trap before falling into it, not to re-validate the entire codebase.
@@ -315,3 +315,13 @@ Do not make this choice unilaterally. The point of the audit is to surface the g
 ## Companion skills
 
 Stack-specific behavior (build idioms, framework annotations, cloud CLI commands) lives in separate skills that compose with this one. This skill defines the workflow; companion skills define the technical idioms. When a companion skill is loaded, follow both. If they conflict, the user decides; ask explicitly.
+
+## 13. Source authority, scenario integrity and independent evidence
+
+Before escalation, inspect the **project-designated** order of approved sources (story, ADR, schema, protocol, reference implementation). There is no universal precedence. An unambiguous higher-authority answer permits implementation with an evidence reference; equal-authority conflict or new business decisions require owner approval. `owner-question-review` can triage this when installed.
+
+Do not weaken or rewrite approved Given/When/Then to make tests green. A change to approved behavior needs the designated owner; a change to test implementation must preserve its oracle. `scenario-integrity` may mechanically audit diffs and mapping but an unchanged hash does not prove a correct oracle.
+
+In Red verify the failure is due to missing behavior. Before Green, map each changed Then to actual observable assertions. For high-risk and negative oracles, use safe targeted negative controls where warranted. Never present mental tests as executed evidence. Classify checks VERIFIED, FAILED or UNVERIFIED.
+
+At an increment boundary, use `independent-verification` if installed or review approved scenarios, code diff, applicable regression results and operational invariants against evidence. A reviewer suggestion is not a new requirement; verify findings and keep scope. Prefer focused checks during Red/Green and broader applicable checks at completion; do not rerun expensive checks without new information.

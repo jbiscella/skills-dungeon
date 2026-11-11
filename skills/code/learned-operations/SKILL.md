@@ -15,7 +15,7 @@ Scripts live in this skill's own `scripts/` directory: `~/.claude/skills/learned
 
 **Stop and surface to the user on.** Listed script unreadable or corrupted (treat as absent, tell the user, do not silently recreate). A new operation that needs a near-duplicate of an existing script — apply the parametrise-vs-clone table before writing anything. A `trusted` script whose context no longer matches — clone to a draft, do not edit in place.
 
-**Expected output shape.** Match in `trusted` state — invoke directly, do not re-read the body. Match in `verified` — re-read, confirm fit, invoke. Match in `draft` — re-read, run, re-verify side-effects before relying. No match — perform manually this turn, then crystallise a new script with the four-line state header and `# state: draft`.
+**Expected output shape.** Match in `trusted` state — the body re-read can be skipped, **not** context matching or side-effect verification. Match in `verified` — re-read, confirm fit, invoke. Match in `draft` — re-read, run, re-verify side-effects before relying. No match — perform manually this turn, then crystallise a new script with the four-line state header and `# state: draft`.
 
 ## State header
 
@@ -44,7 +44,7 @@ State meanings:
 
 | Situation | Action |
 |---|---|
-| Match, `# state: trusted` | Invoke directly. Do NOT re-read the body. |
+| Match, `# state: trusted` | Confirm account, region, directory, target and intended effect; skip body reread only, verify side-effects afterward. |
 | Match, `# state: verified` | Re-read the body, confirm it fits this context, then invoke. |
 | Match, `# state: draft` | Re-read body, run it, then re-verify side-effects before relying on the result. |
 | Listed file unreadable/broken | Treat as absent. Tell the user. Do not silently recreate. |
@@ -86,3 +86,7 @@ Before creating a near-duplicate of an existing script, apply this test against 
 
 - A `trusted` script is immutable: never edit it in place. Need a variant? Clone to a new draft first.
 - Any edit to a draft/verified script — including adding an argument — rewrites its header to `# state: draft` and requires re-verification. A changed script has not been proven in its new form.
+
+## Context is not covered by trust
+
+Trust approves the previously reviewed script body, not a future runtime context. Before **every** invocation, verify environment/account, target, required arguments, current directory and expected side effect. For destructive operations independently confirm the precise target and write authorization. If preconditions cannot be established, report UNVERIFIED and do not run. An optional `# preconditions:` header can record constraints without changing the existing state contract.

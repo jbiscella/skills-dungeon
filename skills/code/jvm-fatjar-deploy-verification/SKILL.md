@@ -11,7 +11,7 @@ A skill for catching the four cascading failure modes that turn a fat jar build 
 
 **On load.** Locate the shaded jar by exact name pattern (not `target/*.jar`). If absent, that is failure mode 1 — stop and report.
 
-**Stop on.** Any of the five checks (shaded-jar presence, size threshold, classpath-root resources, `META-INF/services` correctness, boot verification) fails. Do not "continue with what is there" — a broken jar makes downstream symptoms uninterpretable.
+**Stop on.** Failed structural checks, an observed bootstrap failure, or an inconclusive bootstrap probe. Do not call an inconclusive check PASS. Do not "continue with what is there" — a broken jar makes downstream symptoms uninterpretable.
 
 **Expected output shape.** Pass/fail per check, in order, with the exact failed assertion and its specific remedy (which transformer, which pom.xml change, which dependency to add). On full pass, one explicit "verified" line — do not let the caller infer success from silence.
 
@@ -65,14 +65,14 @@ If your shade configuration uses `<finalName>` to replace the original artifact,
 
 ### Check 2: size threshold
 
-A correctly shaded jar containing a Micronaut or Spring Boot application plus its dependencies is at least 10 MB, typically 20–50 MB. A 300–500 KB jar is a thin jar. The size check is cheap and catches failure #1 immediately.
+A size threshold is a **project-calibrated warning heuristic**, not proof. Compare the artifact with expected dependencies and entry inventory; a small JAR need not be broken, nor is a large JAR necessarily complete.
 
 ```bash
 MIN_SIZE_BYTES=10000000  # 10 MB; tune for the project
 SIZE=$(stat -c%s "$SHADED_JAR" 2>/dev/null || stat -f%z "$SHADED_JAR")
 if [ "$SIZE" -lt "$MIN_SIZE_BYTES" ]; then
-  echo "FAIL: shaded jar size $SIZE bytes is below threshold $MIN_SIZE_BYTES" >&2
-  exit 1
+  echo "WARN: shaded jar size $SIZE bytes below project heuristic $MIN_SIZE_BYTES; inspect dependency entries" >&2
+  # Size alone is insufficient to fail an artifact without project evidence.
 fi
 ```
 
@@ -115,17 +115,17 @@ Pick service files whose absence would cripple the application. One or two is en
 
 The strongest check: actually launch the jar in a clean JVM and verify it initializes without `NoClassDefFoundError`, `ClassNotFoundException`, or property resolution errors. This catches failure #4 (missing transitive dependency) which the static structural checks cannot.
 
-```bash
-# Run with a short timeout; the goal is "does it start up", not "does it run forever"
-LOG=$(timeout 30s java -jar "$SHADED_JAR" 2>&1 || true)
-if echo "$LOG" | grep -qE "NoClassDefFoundError|ClassNotFoundException|Property doesn't exist"; then
-  echo "FAIL: boot verification produced classpath/property errors" >&2
-  echo "$LOG" | grep -E "NoClassDefFoundError|ClassNotFoundException|Property doesn't exist" | head -5 >&2
-  exit 1
-fi
-```
+Define a project-specific **positive bootstrap oracle**: readiness signal, validation-mode successful exit, or a controlled handler invocation. Capture and interpret the real exit status; do not hide it with `|| true`.
 
-For a Lambda entry point that requires an event, run it with a no-op handler invocation or with a flag that exits after context initialization. If the application has no quick-exit mode, add a `--validate-only` flag (or equivalent) that initializes the framework context and returns.
+| Observed evidence | Classification |
+|---|---|
+| Required positive startup signal and expected process behavior | VERIFIED |
+| Crash, unexpected exit, or required check failing | FAILED |
+| Timeout without a startup signal or unsuitable execution environment | UNVERIFIED |
+
+For Lambda, generic `java -jar` may not initialize the deployed handler. Use an isolated handler invocation or an approved bootstrap probe, not a guessed successful launch.
+
+For a Lambda entry point that requires an event, run it with a no-op handler invocation or with a flag that exits after context initialization. If no suitable initialization probe exists, report UNVERIFIED and ask for an approved verification mechanism; do not add unrequested production flags.
 
 ## Maven Shade configuration: required minimum
 
@@ -184,7 +184,7 @@ For Lambda specifically, you may want to add a third check: build the deployment
 - **Adding `mvn verify` as the deploy gate.** Combine it with the artifact verification script; `verify` alone is insufficient.
 - **Writing the verification as a JUnit test.** Java test code runs against the IDE/Maven classpath, not against the produced jar. The whole point of this verification is to test the artifact as a black box. Bash is the right level.
 - **Skipping `ServicesResourceTransformer` because "tests pass".** Tests run against the unshaded classpath where all `META-INF/services` files are independently visible. The failure only appears post-shade.
-- **Ignoring small-jar warnings.** A 500 KB shaded jar is not a small project; it is a broken build.
+- **Treating a size warning as proof.** Inspect the dependencies and the runtime behavior rather than inferring correctness from byte size.
 
 ## Composability with other skills
 
