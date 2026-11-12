@@ -70,7 +70,7 @@ aws iam simulate-principal-policy \
 
 ### Verification
 
-Simulator output is diagnostic evidence, **not a live authorization proof**. Check applicable resource policies, boundaries, SCP/RCP, session and endpoint policies, context keys and resource ARNs. Simulations may omit live controls. After an approved change, test the actual request as the failing identity. Record VERIFIED only on supporting live evidence, FAILED on demonstrated denial and UNVERIFIED when insufficient.
+Simulator output is diagnostic evidence, **not a live authorization proof**. Check applicable resource policies, boundaries, SCP/RCP, session and endpoint policies, context keys and resource ARNs. Simulations may omit live controls (verified as of 2026-11-12 against the AWS IAM docs: resource-based policies must be supplied, SCPs with conditions are not evaluated, RCPs and cross-account role/user simulation are unsupported, and AWS states results can differ from the live environment; AWS changes these limits, so re-check the docs). After an approved change, test the actual request as the failing identity. Record VERIFIED only on supporting live evidence, FAILED on demonstrated denial and UNVERIFIED when insufficient.
 
 ## Pattern 2 — Deploy state verification chain
 

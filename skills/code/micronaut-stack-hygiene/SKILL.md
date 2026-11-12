@@ -44,7 +44,7 @@ When in doubt about a package path, write the full FQN as a comment next to the 
 
 ## 2. Banned Spring patterns
 
-These are disallowed by default for **native-only Micronaut projects**. With a compatible `micronaut-spring` compile-time integration, a supported subset of Spring annotations can be translated; check the actual build and project policy before treating them as errors.
+These are disallowed by default for **native-only Micronaut projects**. With a compatible `micronaut-spring` compile-time integration, a supported subset of Spring annotations can be translated; check the actual build and project policy before treating them as errors. (Verified as of 2026-11-12 against the Micronaut for Spring guide: it maps e.g. `@Component` and `@Service` to Micronaut's `@Bean` at compile time. The exact mapping of `@Autowired` was not confirmed — read the guide's supported-annotations table for your version.)
 
 - `@SpringBootApplication`
 - `@RestController`, `@Controller` from Spring Web (Micronaut uses `io.micronaut.http.annotation.Controller`)
@@ -106,7 +106,7 @@ class MyServiceTest { ... }
 
 ### Bean replacement in tests
 
-For replacing a bean, Micronaut Test provides `io.micronaut.test.annotation.MockBean(TargetType.class)`; alternatively a Micronaut `@Bean` plus `@Replaces` can work. Verify the project's test libraries before choosing a pattern. Alternative example:
+For replacing a bean, Micronaut Test provides `io.micronaut.test.annotation.MockBean(TargetType.class)` (verified as of 2026-11-12 against the Micronaut Test 4.x guides; reconfirm for your Micronaut Test version); alternatively a Micronaut `@Bean` plus `@Replaces` can work. Verify the project's test libraries before choosing a pattern. Alternative example:
 
 ```
 @MicronautTest
