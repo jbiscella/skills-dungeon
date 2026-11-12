@@ -9,9 +9,9 @@ A skill for keeping Java code in a Micronaut project free of Spring-isms and ali
 
 ## Minimum protocol
 
-**On load.** For every Java file in scope, scan imports for any `org.springframework.*` and for the banned annotations in §2. Cite the full FQN at first use of any annotation from the §1 map.
+**On load.** Confirm Micronaut version, annotation processors, project code-style rules, and whether Micronaut for Spring interop is intentionally enabled. Inspect ambiguous imports rather than assuming every Spring annotation is inert. Cite the full FQN at first use of any annotation from the §1 map.
 
-**Stop on.** Existing Spring-isms in the file (`@Autowired`, `@Component`, `@Service`, `@SpringBootTest`, etc.) — that is drift, do not silently rewrite; report per `incremental-implementation-workflow` §12. Project `CLAUDE.md` §Code Style that contradicts this skill — CLAUDE.md wins.
+**Stop on.** Unsupported annotations that alter runtime semantics or conflict with authoritative project style. Do not rewrite intentionally supported interoperability code as drift. Project `CLAUDE.md` §Code Style that contradicts this skill — CLAUDE.md wins.
 
 **Expected output shape.** Code with explicit Micronaut FQN imports, no Spring imports, constructor injection preferred over field injection. When ambiguous (`@Value`, `@Primary`, `@Property`), the resolved FQN is named in the surrounding text or a one-line comment.
 
@@ -36,7 +36,7 @@ These annotations share names across frameworks but live in different packages w
 | Test class annotation (JUnit 5) | `io.micronaut.test.extensions.junit5.annotation.MicronautTest` | `org.springframework.boot.test.context.SpringBootTest` |
 | Test class annotation (Spock) | `io.micronaut.test.extensions.spock.annotation.MicronautTest` | — |
 | Test property override | `io.micronaut.context.annotation.Property` | `org.springframework.test.context.TestPropertySource` |
-| Bean replacement for tests | `io.micronaut.context.annotation.Replaces` (on a `@Bean` method, typically in a test class) | `@MockBean` (Spring Boot Test) |
+| Bean replacement for tests | `io.micronaut.test.annotation.MockBean` or `io.micronaut.context.annotation.Replaces` | Spring's separately packaged mock annotation (verify version) |
 | Primary bean among candidates | `io.micronaut.context.annotation.Primary` | `org.springframework.context.annotation.Primary` (same name, different runtime) |
 | Bean validation constraints | `jakarta.validation.constraints.*` | `jakarta.validation.constraints.*` (same package; the surrounding stack differs) |
 
@@ -44,7 +44,7 @@ When in doubt about a package path, write the full FQN as a comment next to the 
 
 ## 2. Banned Spring patterns
 
-These must never appear in a Micronaut codebase. Most compile if Spring is transitively on the classpath but cause runtime breakage or — worse — silent misbehavior.
+These are disallowed by default for **native-only Micronaut projects**. With a compatible `micronaut-spring` compile-time integration, a supported subset of Spring annotations can be translated; check the actual build and project policy before treating them as errors. (Verified as of 2026-11-12 against the Micronaut for Spring guide: it maps e.g. `@Component` and `@Service` to Micronaut's `@Bean` at compile time. The exact mapping of `@Autowired` was not confirmed — read the guide's supported-annotations table for your version.)
 
 - `@SpringBootApplication`
 - `@RestController`, `@Controller` from Spring Web (Micronaut uses `io.micronaut.http.annotation.Controller`)
@@ -52,7 +52,7 @@ These must never appear in a Micronaut codebase. Most compile if Spring is trans
 - `@Autowired` (use `@Inject` or, preferably, constructor injection)
 - `@TestPropertySource` (use `@Property` or `@MicronautTest(propertySources = …)`)
 - Spring's `@Value` and `@ConfigurationProperties` (different package, different binding)
-- `@MockBean` from Spring Boot Test (use `@Bean` + `@Replaces` in the test class)
+- Spring's `@MockBean` when not intentionally supported; Micronaut Test provides `io.micronaut.test.annotation.MockBean`
 - `@SpringBootTest` (use `@MicronautTest`)
 - Spring `@Transactional` from `org.springframework.transaction.annotation` (Micronaut provides its own transactional support via `io.micronaut.transaction.annotation.Transactional`)
 
@@ -106,7 +106,7 @@ class MyServiceTest { ... }
 
 ### Bean replacement in tests
 
-For replacing a real bean with a test double, declare a `@Bean` method in the test class annotated with `@Replaces(TargetType.class)`. This is the Micronaut equivalent of `@MockBean`:
+For replacing a bean, Micronaut Test provides `io.micronaut.test.annotation.MockBean(TargetType.class)` (verified as of 2026-11-12 against the Micronaut Test 4.x guides; reconfirm for your Micronaut Test version); alternatively a Micronaut `@Bean` plus `@Replaces` can work. Verify the project's test libraries before choosing a pattern. Alternative example:
 
 ```
 @MicronautTest
@@ -119,7 +119,7 @@ class VehicleTest {
 }
 ```
 
-This avoids the need for runtime proxies. Do not look for `@MockBean` — Micronaut does not have it.
+Do not confuse Micronaut Test's `io.micronaut.test.annotation.MockBean` with Spring's similarly named annotation. Confirm replacement in a real context test.
 
 ### Bean selection among candidates
 
@@ -131,7 +131,7 @@ Use `@Requires(...)` (`io.micronaut.context.annotation.Requires`) for conditiona
 
 ## 4. Anti-patterns to avoid
 
-- **Mixing Spring and Micronaut annotations on the same class.** Compiles, but Micronaut's processor only sees its own. The Spring annotations become dead metadata that future readers will believe are active.
+- **Assuming Spring annotations always do nothing.** Unsupported ones can be inert, but Micronaut for Spring can map selected annotations at compile time. Confirm actual compatibility and intended conventions.
 - **Using `@Autowired` "because it works".** It may or may not work depending on classpath; even when it works, it signals the author was thinking Spring. Use `@Inject` or constructor injection.
 - **Calling `Micronaut.run(...)` in non-main contexts.** Only the application entry point should bootstrap the context. Inside Lambda handlers, the bootstrap pattern is different (see Lambda companion skills).
 - **`@Value` on a field that needs validation.** Use `@ConfigurationProperties` with `jakarta.validation` constraints instead. `@Value` is for simple cases.
@@ -144,7 +144,7 @@ When citing any annotation from the table in §1 or referencing a Micronaut feat
 
 If a code section uses an annotation whose package is ambiguous from context (e.g. `@Value`, `@Primary`, `@Property`), grep the imports before committing:
 
-- `grep -rn "import org.springframework" src/` should return zero results.
+- `grep -rn "import org.springframework" src/` should return zero results only when native-only Micronaut is required; otherwise review every import against approved interoperability.
 - `grep -rn "@Autowired\|@Component\|@Service\|@Repository" src/` should return zero results.
 
 These checks fit naturally into a pre-commit hook or a CI lint step.
@@ -159,3 +159,5 @@ This skill defines hygiene and idioms only. It does not cover:
 - The implementation workflow itself (BDD, prereq → red → green, classification of failures) — see the `incremental-implementation-workflow` skill.
 
 When this skill conflicts with project-level conventions in CLAUDE.md, CLAUDE.md wins. Defer to the project's ADR and Code Style sections; this skill is a fallback for projects whose CLAUDE.md does not fix these choices.
+
+Official references: https://micronaut-projects.github.io/micronaut-test/latest/guide/ and https://micronaut-projects.github.io/micronaut-spring/ .

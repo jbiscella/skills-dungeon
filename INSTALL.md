@@ -2,7 +2,7 @@
 
 Most of the time you want **one skill**, not the whole repo. The install path depends on the surface:
 
-- **Claude.ai chat skills** (`skills/chat/`) — uploaded via the Claude.ai UI. There's only one pattern; see Pattern 0.
+- **Claude.ai chat skills** (`skills/chat/`) — uploaded via the Claude.ai UI. Use Pattern 0 for either chat skill.
 - **Claude Code skills** (`skills/code/`) — loaded from `.claude/skills/` in a project. Four patterns below, in order of recommendation.
 
 ## A note on git submodules
@@ -38,7 +38,7 @@ menu path may shift — when in doubt, search the
 
 1. Open Claude.ai (web or desktop) → **Settings → Customize → Skills**.
 2. Click **+ Create skill** and upload the corresponding `.skill` from
-   `packaged/` — e.g. `packaged/three-amigos.skill`.
+   `packaged/` — e.g. `packaged/three-amigos.skill` or `packaged/owner-question-review.skill`.
 3. Toggle the new skill on.
 
 The `.skill` archive must contain the skill folder at its root

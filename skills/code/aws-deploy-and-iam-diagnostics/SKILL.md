@@ -66,11 +66,11 @@ aws iam simulate-principal-policy \
   --output table
 ```
 
-3. **The fix is mechanical**, not architectural: attach the missing action to the failing role's policy. Do not redesign the IAM structure based on this one finding.
+3. **Identify the actual denying control**, including resource and condition context. Recommend the narrowest approved change; do not automatically attach permissions to identity policies or redesign IAM.
 
 ### Verification
 
-After applying the fix, re-run `simulate-principal-policy` on the failing identity — it must now show `allowed`. Then re-invoke the failing call; it should succeed without code changes.
+Simulator output is diagnostic evidence, **not a live authorization proof**. Check applicable resource policies, boundaries, SCP/RCP, session and endpoint policies, context keys and resource ARNs. Simulations may omit live controls (verified as of 2026-11-12 against the AWS IAM docs: resource-based policies must be supplied, SCPs with conditions are not evaluated, RCPs and cross-account role/user simulation are unsupported, and AWS states results can differ from the live environment; AWS changes these limits, so re-check the docs). After an approved change, test the actual request as the failing identity. Record VERIFIED only on supporting live evidence, FAILED on demonstrated denial and UNVERIFIED when insufficient.
 
 ## Pattern 2 — Deploy state verification chain
 
@@ -184,7 +184,7 @@ You suspect the deployed artifact is not the one produced by the latest CI build
 
 ### Procedure
 
-The Lambda function's `CodeSha256` is computed by AWS over the deployed package contents. If you compute the SHA256 of the artifact in S3 (or wherever CI uploaded it) and compare with what AWS reports, they must match. If they don't, the artifact deployed is not the one you think.
+Lambda `CodeSha256` refers to the deployed **package bytes**. If a shaded JAR is placed inside a ZIP, its digest will differ from the ZIP digest. Trace build JAR → actual upload package → Lambda and only compare hashes of like-for-like bytes.
 
 1. **Compute the SHA256 of the artifact you expect to be running.** For a local file:
 
@@ -192,7 +192,7 @@ The Lambda function's `CodeSha256` is computed by AWS over the deployed package 
 sha256sum target/your-app-shaded.jar | awk '{print $1}' | xxd -r -p | base64
 ```
 
-The `xxd | base64` dance is because AWS reports the hash in base64, not hex. The result should match exactly the `CodeSha256` field from `aws lambda get-function`.
+The `xxd | base64` dance is because AWS reports the hash in base64, not hex. Only when the file being hashed is exactly the deployed package should this digest match Lambda's `CodeSha256`. For a ZIP wrapper, hash the ZIP instead.
 
 2. **Compare with what Lambda reports:**
 
@@ -226,3 +226,5 @@ This skill covers operational diagnostics only. It does not cover:
 - The implementation workflow that generated the code being deployed. See `incremental-implementation-workflow`.
 
 If a deploy issue resolves to "the artifact itself is broken" (e.g. thin jar instead of fat jar, missing application.yml), this skill points outside its scope — escalate to the build verification skill.
+
+Simulator limitations: https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_testing-policies.html .

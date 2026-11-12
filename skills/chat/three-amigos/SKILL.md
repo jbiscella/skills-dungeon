@@ -13,7 +13,7 @@ The skill exists because implementation discipline downstream is wasted if the s
 
 **On load.** Detect mode. A user prompt that names a single role ("BA — ...", "Tester, ...") is targeted; any other prompt that supplies a draft story is round-table (BA → Tester → Technician, in that order).
 
-**Stop on.** A blocking unknown that cannot be resolved in chat (Technician flags a missing dependency the user cannot confirm; BA and Tester disagree on actor or oracle; an answer points outside the conversation). Hand off to the 8-section clarification brief in `skills/code/incremental-implementation-workflow/SKILL.md` §6.
+**Stop on.** A blocking unknown that cannot be resolved in chat (Technician flags a missing dependency the user cannot confirm; BA and Tester disagree on actor or oracle; an answer points outside the conversation). Hand off to the eight-section self-contained clarification brief in §5 below (Claude Code files may not be present in Claude.ai).
 
 **Expected output shape.** Targeted mode — response in the one named role's voice, asking that role's checklist questions back. Round-table mode — three role headings in fixed order, followed by `## Refinement output` with four sections (refined value clause, refined Given/When/Then, open questions with explicit answer criteria, out-of-scope decisions). Never paraphrase the output as prose.
 
@@ -59,14 +59,14 @@ Each role walks its checklist in order and stops as soon as the answer is clear 
 **BA checklist.**
 1. Who is the actor? Is the role concrete enough to identify in production?
 2. What is the value? Is the "so that" falsifiable, or a restatement of "I want"?
-3. What is explicitly out of scope? Name at least one neighbour the story does not cover.
+3. What has explicitly been decided out of scope? Distinguish approved exclusions from suggested exclusions; do not invent a mandatory exclusion.
 4. Are there hidden actors (admin, system, downstream consumer) the draft omits?
 
 **Tester checklist.**
 1. Does every scenario have a Given, a When, and a Then?
 2. Is each Then a checkable oracle (deterministic, observable)?
-3. Edge cases — empty input, duplicate input, concurrent action, error path.
-4. Would a no-op implementation pass any scenario? If yes, that scenario is dead coverage and must be tightened.
+3. Identify decision branches and missing combinations; use a decision table only when multiple conditions materially affect behavior. Then check relevant edge cases: empty input, duplicate input, concurrent action, error path.
+4. Would a no-op implementation pass? In negative cases, could the asserted absence occur even when the required action was never attempted? Demand an observable oracle without inventing behavior.
 
 **Technician checklist.**
 1. What dependencies (services, libraries, data) does this assume exist?
@@ -79,7 +79,7 @@ Each role walks its checklist in order and stops as soon as the answer is clear 
 After a round-table, always emit this exact structure under a heading `## Refinement output`:
 
 1. **Refined value clause.** `As <actor>, I want <capability>, so that <falsifiable outcome>.` If any field cannot be filled from the draft + discussion, write `<UNRESOLVED — see open questions>`.
-2. **Refined Given/When/Then.** Gherkin-formatted scenarios, one per behavioral case, with concrete oracles. Edge cases surfaced by the Tester appear here as additional scenarios.
+2. **Refined Given/When/Then.** Gherkin-formatted scenarios, one per behavioral case, with concrete oracles. Scenarios the user stated stay as stated, only with the oracle made observable. Edge cases surfaced by the Tester appear here as additional scenarios marked **Proposed** (not approved until the user confirms them); do not add new outcomes to a stated scenario's Then, and do not record a proposed scenario as an approved requirement.
 3. **Open questions.** Numbered list of questions still blocking readiness. Each question is binary or multiple-choice with an explicit answer criterion (no "what do you think").
 4. **Out of scope.** Decisions made during the session about what the story does not cover. One line each.
 
@@ -87,7 +87,7 @@ This artifact is the input shape consumed by `incremental-implementation-workflo
 
 ## 5. Handoff to clarification brief
 
-If a round-table cannot reach a refined spec — the three roles disagree, or a blocking unknown remains that the user cannot resolve in chat — produce the 8-section clarification brief defined in `skills/code/incremental-implementation-workflow/SKILL.md` §6, verbatim structure (Context, Source artifacts, Ambiguity statement, Why it blocks, Options considered, Recommendation, Question to reviewer, Out of scope). Do not duplicate that template here; reference it.
+If a round-table cannot reach a refined spec — the three roles disagree, or a blocking unknown remains that the user cannot resolve in chat — produce eight sections in this order: **Context**, **Source artifacts**, **Ambiguity statement**, **Why it blocks**, **Options considered**, **Recommendation** (non-authoritative), **Question to reviewer** (bounded choices and answer criterion), **Out of scope** (only approved exclusions). If project-authorized sources resolve the question, cite them and continue instead of escalating.
 
 Trigger the handoff when:
 - The Technician flags a dependency the user has not confirmed and the discussion cannot proceed without it.
@@ -101,3 +101,7 @@ Trigger the handoff when:
 - **Skipping the Tester because the BA "covered it".** The BA's clarity does not produce coverage. Run the Tester checklist independently.
 - **Prose artifact.** Returning the round-table output as paragraphs instead of the four-section structure in §4. The structure is what makes the output consumable downstream.
 - **Open-ended open questions.** "What do you think about X?" is not an open question, it is a deferred decision. Every open question has an explicit answer criterion.
+
+## Activation and scope boundary
+
+Do not run a round-table merely because a user quotes a story during implementation. Require intent to refine, review or assess readiness. Do not turn proposed exclusions or new edge cases into approved requirements.

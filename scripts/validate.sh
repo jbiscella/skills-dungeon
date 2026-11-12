@@ -20,8 +20,7 @@
 # Repo-wide checks:
 # 5. Every skill folder has a matching packaged/<name>.skill, and every
 #    packaged/<name>.skill has a matching skill folder (no orphans).
-# 6. No packaged/<name>.skill is older than any file inside its source
-#    skill folder (stale package detection).
+# 6. Each packaged archive has the same member contents as its source skill (content comparison).
 # 7. install.sh's SKILLS_SRC path resolves to skills/code/.
 # 8. Every relative markdown link in README.md, INSTALL.md, and per-skill
 #    READMEs points to an existing file or directory in the repo.
@@ -128,32 +127,8 @@ if [ -d "$PACKAGED_DIR" ]; then
     done
 fi
 
-# ----- Package staleness ------------------------------------------------------
-
-echo
-echo "Checking packaged/ freshness..."
-
-# A package is stale if any file inside its source folder is newer than the
-# package itself. find ... -newer prints offending files; we just need a flag.
-for skill in "${known_skills[@]}"; do
-    pkg="$PACKAGED_DIR/$skill.skill"
-    [ -f "$pkg" ] || continue
-
-    src=""
-    for surface_dir in "$SKILLS_SRC"/*/; do
-        if [ -d "$surface_dir$skill" ]; then
-            src="$surface_dir$skill"
-            break
-        fi
-    done
-    [ -n "$src" ] || continue
-
-    newer="$(find "$src" -type f -newer "$pkg" -print -quit 2>/dev/null || true)"
-    if [ -n "$newer" ]; then
-        echo "  WARN: packaged/$skill.skill is older than source ($newer); run scripts/package.sh $skill"
-        warnings=$((warnings + 1))
-    fi
-done
+# Package content integrity is checked by scripts/check_packages.py below.
+# Git checkout timestamps are not reliable indicators of archive freshness.
 
 # ----- install.sh source path -------------------------------------------------
 
@@ -268,6 +243,11 @@ if [ "$CHECK_URLS" -eq 1 ]; then
         echo "  Probed $total URL(s): $ok_count reachable, $warn_count flagged, $err_count broken"
     fi
 fi
+
+# ----- Source/package and contract integrity ----------------------------------
+echo "Checking packaged content and static skill contracts..."
+python3 "$SCRIPT_DIR/check_packages.py" || errors=$((errors + 1))
+python3 "$SCRIPT_DIR/check_contracts.py" || errors=$((errors + 1))
 
 # ----- Summary ----------------------------------------------------------------
 
