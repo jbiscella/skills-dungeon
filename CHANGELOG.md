@@ -9,6 +9,8 @@ All notable changes to this repository are recorded here.
 - Refined behavior/decision authority, scenario-oracle mapping, review scope and Three Amigos handoff.
 - Added `owner-question-review`, `scenario-integrity`, and `independent-verification` skills.
 - Added packaged-artifact content validation and contract fixture checks.
+- Executed the 14 behavioral cases (2026-11-12) and recorded results in `tests/behavior-cases.md`, with reproducible prompts. One case (B2) exposed a contradiction in `three-amigos` §4: Tester edge cases are now marked Proposed instead of being written into the refined scenarios as approved.
+- `check_contracts.py` now discovers skills instead of hard-coding nine, fails when a skill lacks contract markers or behavior cases, and warns when a case has no recorded result. `check_packages.py` ignores the same junk files as `package.sh`.
 
 ## 2026-05-29 — learned-operations
 

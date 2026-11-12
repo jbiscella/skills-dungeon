@@ -79,7 +79,7 @@ Each role walks its checklist in order and stops as soon as the answer is clear 
 After a round-table, always emit this exact structure under a heading `## Refinement output`:
 
 1. **Refined value clause.** `As <actor>, I want <capability>, so that <falsifiable outcome>.` If any field cannot be filled from the draft + discussion, write `<UNRESOLVED — see open questions>`.
-2. **Refined Given/When/Then.** Gherkin-formatted scenarios, one per behavioral case, with concrete oracles. Edge cases surfaced by the Tester appear here as additional scenarios.
+2. **Refined Given/When/Then.** Gherkin-formatted scenarios, one per behavioral case, with concrete oracles. Scenarios the user stated stay as stated, only with the oracle made observable. Edge cases surfaced by the Tester appear here as additional scenarios marked **Proposed** (not approved until the user confirms them); do not add new outcomes to a stated scenario's Then, and do not record a proposed scenario as an approved requirement.
 3. **Open questions.** Numbered list of questions still blocking readiness. Each question is binary or multiple-choice with an explicit answer criterion (no "what do you think").
 4. **Out of scope.** Decisions made during the session about what the story does not cover. One line each.
 

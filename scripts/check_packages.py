@@ -5,6 +5,17 @@ from zipfile import ZipFile, BadZipFile
 import sys
 
 root = Path(__file__).resolve().parent.parent
+
+
+def excluded(relative: Path) -> bool:
+    """Mirror the exclusions of scripts/package.sh so local junk never fails the check."""
+    return (
+        relative.name.endswith(".DS_Store")
+        or "__pycache__" in relative.parts
+        or "node_modules" in relative.parts
+    )
+
+
 skills = {
     p.name: p
     for surface in (root / "skills").iterdir() if surface.is_dir()
@@ -18,7 +29,8 @@ for name, folder in sorted(skills.items()):
         continue
     expected = {
         f"{name}/{file.relative_to(folder).as_posix()}": file.read_bytes()
-        for file in folder.rglob("*") if file.is_file()
+        for file in folder.rglob("*")
+        if file.is_file() and not excluded(file.relative_to(folder))
     }
     try:
         with ZipFile(package) as archive:
