@@ -32,7 +32,8 @@ The owner sets the operational rules: which layers run where, how many agents ru
 
 ## 4. Test locally what can be tested locally
 
-- Before a pull request, run on the exact commit every test layer the project defines that can run on this machine (unit, integration, end-to-end, performance and any others), long-running ones included. The pull request records each layer's command and result.
+- Before every pull request, run on the exact commit every test layer the project runs on each change and that this machine can run (unit, integration, end-to-end, performance gates, the build and lint of every target, and any others), including those that so far run only on main or on a schedule. The pull request records each layer's command and result.
+- Long or expensive suites the project runs only when a change needs them (chaos, soak, load) run locally when the change makes them necessary. The pull request says whether they were needed, and why.
 - CI then repeats them. It does not replace them. Only layers the machine cannot run (other operating systems, devices, unavailable browsers) are left to CI, and those are listed in the pull request.
 - A test the change touches but no CI job runs on pull requests must be run locally.
 
