@@ -4,7 +4,7 @@ All notable changes to this repository are recorded here.
 
 ## 2026-11-15 — parallel-operations
 
-- Added `parallel-operations`: agents sized to the hardware, isolated local test environments with containers within 70% of memory, every locally runnable test layer run before a pull request, never merging into a red main, operational rules left to the owner. Behavior cases B15 and B16 added and run 2026-11-15: B15 PASS, B16 PASS (note).
+- Added `parallel-operations`: agents sized to the hardware, isolated local test environments with containers within 70% of memory, every locally runnable test layer run before a pull request, never merging into a red main, operational rules left to the owner. Revised after an independent analysis against the owner's "Who is waiting for whom" series and established practice: work-in-flight cap, every main/scheduled/nightly job read before a merge, one merge at a time, claim-and-revert for a red main, peak-based memory admission, periodic suites remote. Behavior cases B15–B24, run 2026-11-15: all PASS.
 
 ## 2026-11-11 — supervision reliability
 
