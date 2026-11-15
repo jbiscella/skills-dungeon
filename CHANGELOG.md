@@ -2,6 +2,10 @@
 
 All notable changes to this repository are recorded here.
 
+## 2026-11-15 — parallel-operations
+
+- Added `parallel-operations`: agents sized to the hardware, isolated local test environments with containers within 70% of memory, every locally runnable test layer run before a pull request, never merging into a red main, operational rules left to the owner. Behavior cases B15 and B16 added and run 2026-11-15: B15 PASS, B16 PASS (note).
+
 ## 2026-11-11 — supervision reliability
 
 - Corrected Micronaut Test's `@MockBean` and conditional Spring integration handling.

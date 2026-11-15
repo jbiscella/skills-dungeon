@@ -30,7 +30,7 @@ This is **not** built for mass distribution. There's no roadmap, no SLA, no atte
 
 ## What's inside
 
-- **Nine skills** in the [Agent Skills](https://docs.claude.com/en/docs/claude-code/skills) format (`SKILL.md` per folder), each with a README explaining when it helps and when it's redundant. Seven target Claude Code; two target Claude.ai chat.
+- **Ten skills** in the [Agent Skills](https://docs.claude.com/en/docs/claude-code/skills) format (`SKILL.md` per folder), each with a README explaining when it helps and when it's redundant. Eight target Claude Code; two target Claude.ai chat.
 - **Pre-built `.skill` packages** in `packaged/`, ready for one-off upload (Claude.ai chat) or unzip (Claude Code).
 - **Helper scripts** in `scripts/` to install, package, and validate skills.
 - **Install guide** in [`INSTALL.md`](INSTALL.md) covering Claude.ai upload, single-skill copies, `.skill` uploads, and submodule setups.
@@ -43,6 +43,7 @@ This is **not** built for mass distribution. There's no roadmap, no SLA, no atte
 | 💬 Chat | [`three-amigos`](skills/chat/three-amigos) | Runs a Three Amigos refinement on a draft story or `CLAUDE.md` increment from BA / Tester / Technician viewpoints; emits a refined value clause, Gherkin scenarios, open questions, and out-of-scope. | Drafting or pre-flighting a user story in Claude.ai chat before implementation begins. | The spec is already refined, or it's a pure implementation task. |
 | 🧑‍💻 Code | [`scenario-integrity`](skills/code/scenario-integrity) | Preserve approved Gherkin and effective step oracles. | Updating scenarios, steps or accepted increments. | No approved baseline exists. |
 | 🧑‍💻 Code | [`independent-verification`](skills/code/independent-verification) | Audit accepted increments using independent test and code evidence. | At meaningful acceptance boundaries. | Evidence unavailable or redundant review. |
+| 🧑‍💻 Code | [`parallel-operations`](skills/code/parallel-operations) | Size agents to the hardware, isolate local test environments, run every local test layer, never merge into a red main. | Several agents or pull requests on one machine and repository. | One agent and a pull-request CI that already runs every layer. |
 | 🧑‍💻 Code | [`learned-operations`](skills/code/learned-operations) | Cross-project memory of repeatable shell operations: crystallises new multi-step operations as bash scripts with a `draft / verified / trusted` state header, and reuses matched scripts instead of regenerating commands. Install at `~/.claude/skills/`. | Repeating multi-step shell operations across projects (deploys, diagnostics, infra recipes). | One-off operations, or projects with an existing runbook / Makefile / Taskfile that already covers the steps. |
 | 🧑‍💻 Code | [`incremental-implementation-workflow`](skills/code/incremental-implementation-workflow) | Drives a prereq → red → green → refactor cycle for increments specified in a `CLAUDE.md`, with explicit handling of ambiguity and drift. | Any project where Claude Code writes code against BDD-style increments. | You don't work from `CLAUDE.md` increments or BDD scenarios. |
 | 🧑‍💻 Code | [`aws-deploy-and-iam-diagnostics`](skills/code/aws-deploy-and-iam-diagnostics) | Diagnoses AWS deploy/IAM problems mechanically — cross-identity policy diff, deploy-state verification, config wiring audit, artifact provenance. | `AccessDenied`, "CI green but prod broken", config not reaching runtime, stale Lambda alias. | The project doesn't touch AWS. |
@@ -92,6 +93,7 @@ Claude Code loads any skill that lives as a direct child of `.claude/skills/` (v
 ├── skills/
 │   ├── code/              # Claude Code skills — loaded from .claude/skills/ (or ~/.claude/skills/)
 │   │   ├── independent-verification/
+│   │   ├── parallel-operations/
 │   │   ├── scenario-integrity/
 │   │   ├── learned-operations/
 │   │   ├── incremental-implementation-workflow/
