@@ -11,7 +11,7 @@ Parallel work is only faster while every change still lands on a green main afte
 
 **On load.** Read the machine (cores, memory, current load), the project's test layers and how each starts its services, the main branch's latest finished CI run, and every open pull request with its agent.
 **Stop on.** A red or unexplained job on main; a change with a failure that appeared only with it; a test layer that could run locally but was not run; a plan needing more agents or memory than the budget below; any change to how or where tests run that the owner has not approved.
-**Expected output shape.** Before parallel work: cores, memory and load measured | agents allowed and why | test environment per agent, or shared and why | container memory cap. Before a merge: main status (run id, every job) | local layers run on the exact commit, with results | open failures and their owners | MERGE or HOLD with the reason.
+**Expected output shape.** Before parallel work: cores, memory and load measured | agents allowed and why | test environment per agent, or shared and why | container memory cap and the room left in it. Before a merge: main status (run id, every job) | local layers run on the exact commit, with results | open failures and their owners | MERGE or HOLD with the reason.
 
 ## 1. Operations are the owner's decisions
 
@@ -27,6 +27,7 @@ The owner sets the operational rules: which layers run where, how many agents ru
 
 - Each agent runs its test services (databases, servers, brokers) as its own instance, with its own ports, names and data: a Docker Compose project per agent (`docker compose -p agent-1`), or per-run containers where the project already uses them. One shared deployment is enough when it serves every agent's tests and nothing in it can conflict: no shared state, ports or names.
 - Containers together stay within 70% of the machine's memory, enforced by per-service limits or a parent cgroup, not by hope.
+- The 70% budget also decides whether a new instance may start. Before an agent starts one, add the memory the running containers use now (`docker stats --no-stream`) to what the new instance needs at its peak, measured from an earlier run or set as its limit. Start it only if the total stays within 70% of the machine's memory. Otherwise wait for a running instance to finish, or share one where nothing conflicts. Never start it anyway, and never raise the budget alone.
 - Never free a port and expect it to stay free for a test target. Hold the socket for the test's lifetime.
 
 ## 4. Test locally what can be tested locally
