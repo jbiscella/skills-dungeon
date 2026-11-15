@@ -27,6 +27,7 @@ MARKERS = {
     "owner-question-review": ["OWNER REQUIRED", "RESOLVED"],
     "scenario-integrity": ["approved baseline", "observable assertion"],
     "independent-verification": ["unverified hypothesis", "actual"],
+    "parallel-operations": ["the only merge allowed is the fix for that red", "pauses work and resumes it"],
 }
 
 skills = {

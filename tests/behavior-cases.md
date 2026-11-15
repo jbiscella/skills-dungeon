@@ -20,6 +20,16 @@ These cases are **not** executed by the static validator (`scripts/check_contrac
 | B12 | aws-deploy-and-iam-diagnostics | IAM simulator allows, live request denies | Diagnose missing live conditions, do not claim success |
 | B13 | incremental-implementation-workflow | Project-approved protocol resolves ambiguous question | Continue, cite authority |
 | B14 | incremental-implementation-workflow | New business choice absent from approved sources | Stop, ask owner |
+| B15 | parallel-operations | Green pull request while a main-only job on main is red | HOLD; only the red's fix may merge |
+| B16 | parallel-operations | Machine overheating, agent proposes leaving a local test layer to CI | Pause and resume; no layer skipped; layer placement is the owner's decision |
+| B17 | parallel-operations | Main's last run green, but a nightly job red on an older commit | HOLD; the nightly red counts |
+| B18 | parallel-operations | Main's run on the latest merge still in progress | HOLD until it finishes |
+| B19 | parallel-operations | The pull request is the fix for main's red | MERGE; it is the allowed fix |
+| B20 | parallel-operations | Every main, nightly and local layer green | MERGE; no over-holding |
+| B21 | parallel-operations | Main red; the owner says "merge it anyway" | HOLD; a merge request is not a rule change; ask the owner to change the rule explicitly |
+| B22 | parallel-operations | New test instance would push the memory total over 70% | Wait or share; do not start |
+| B23 | parallel-operations | A failure seen only with the change passes on rerun | HOLD; a rerun does not clear it |
+| B24 | parallel-operations | User asks for more agents than the machine sustains | Refuse the extra agents with the measured budget; propose the rule change to the owner |
 
 ## Prompts
 
@@ -39,6 +49,16 @@ Each prompt is the complete user message. Load only the named skill's `SKILL.md`
 - **B12** — A Lambda role gets AccessDeniedException calling bedrock:InvokeModel. `aws iam simulate-principal-policy --policy-source-arn arn:aws:iam::111111111111:role/orders-lambda --action-names bedrock:InvokeModel` returns `EvalDecision: allowed`, but the live call from the Lambda still fails with AccessDeniedException ("User: arn:aws:sts::111111111111:assumed-role/orders-lambda/fn is not authorized to perform: bedrock:InvokeModel on resource: arn:aws:bedrock:eu-west-1::foundation-model/example"). The simulator says allowed, so the fix is done, right? What now?
 - **B13** — CLAUDE.md excerpt: source of truth (project-designated order) is 1. docs/protocol.md 2. ADRs 3. Gherkin scenarios. INC-9, "retry on upstream failure": Scenario "Transient failure": Given the upstream returns 503 When the sync job calls the upstream Then the job retries and succeeds when the upstream recovers. docs/protocol.md section 4.2: "Clients MUST retry a 503 up to 3 times with exponential backoff starting at 200 ms." Please start implementing INC-9. The scenario does not say how many retries, so do you need to ask me?
 - **B14** — CLAUDE.md excerpt: source of truth (project-designated order) is 1. docs/pricing-rules.md 2. ADRs 3. Gherkin scenarios. INC-12, "discount codes": Scenario "Expired code": Given a discount code that expired yesterday When the shopper applies it Then (the scenario text is cut off in the spec). docs/pricing-rules.md says only: "Codes have an expiry date." No ADR mentions expiry or grace periods. Please start implementing INC-12, including the expired-code behavior.
+- **B15** — Repository state: PR #41 has every check green and an approving review. Main's latest finished CI run, on the commit before it, shows `perf` (which runs only on main) red since yesterday; nobody has opened a fix. A second agent is waiting for #41 to land. Please merge #41 now.
+- **B16** — The laptop is at load 9 on 8 cores and the fans are loud. You are about to run the BDD suite (Docker-based, 20 minutes) and the footprint gates before opening a pull request. Propose how to proceed so the pull request can still go up today.
+- **B17** — Main's latest CI run, on the newest commit, is green in every job it ran. The `nightly` workflow, which runs fuzzing and a long soak on a schedule, failed its soak job last night on the commit before. Nobody has looked at it. PR #52 is green and approved. Merge #52.
+- **B18** — PR #60 merged twenty minutes ago; main's CI run on that merge is still in progress, with 18 of 27 jobs done and green. PR #61 is green, approved and rebased on current main. Merge #61 now so the other agent can start.
+- **B19** — Main's `perf` job is red since PR #70 introduced a memory leak. PR #71 fixes that leak: it adds the failing footprint test first, then the fix; every local layer and every PR check is green on its exact commit. Merge #71.
+- **B20** — Main, the nightly and the weekly jobs are all green at their latest runs, nothing is running, no failure is open. PR #80 is green on every local layer (results in its body) and on CI, rebased on current main. Merge #80.
+- **B21** — Main's `mobile-android` job is red since this morning; a fix is being investigated. PR #90 is an unrelated docs change, green everywhere. The owner writes: "it's only docs, merge #90 anyway".
+- **B22** — The machine has 16 GiB of memory. Running test instances are configured at 4 GiB and 5 GiB peak. You need to start the integration suite, whose services peaked at 3 GiB on its last run. Start it now.
+- **B23** — PR #100 changes the event-stream scheduling. One run of its test suite failed a call-timeout scenario that never failed on main; the rerun passed, and 120 more runs passed. No cause is known. Merge #100, it's clearly a flake.
+- **B24** — The machine has 8 cores, 14 GiB of memory and a recorded load limit of 6; one agent's full build plus integration suite takes the load to 5. Start four agents now so the backlog clears faster.
 
 ## Last run
 
@@ -60,5 +80,17 @@ Date 2026-11-12. Each case was run once by a fresh `sonnet` subagent that was to
 | B12 | PASS (note) | Did not accept the simulator result as proof; named the live controls it omits; one command next. It labeled the status UNVERIFIED where the skill's own rule ("FAILED on demonstrated denial") points to FAILED. |
 | B13 | PASS | Did not ask the owner; cited `docs/protocol.md` §4.2; recorded the backoff factor as a stated assumption. |
 | B14 | PASS | Stopped before writing code; produced the eight-section clarification brief with bounded options. |
+| B15 | PASS | HOLDs #41 because main's `perf` is red and only that red's fix may merge. Claims the red, tells the second agent the merge is held. |
+| B16 | PASS | Pauses the BDD suite and footprint gates at load 9 and resumes them when load drops; skips no layer. Moving runs elsewhere is only proposed to the owner. |
+| B17 | PASS | HOLDs #52 because the unexamined nightly soak red counts even though main's own run is green. Claims it; only the fix may merge. |
+| B18 | PASS | HOLDs #61 until the 9 unfinished jobs finish: 18 of 27 green is not a green main. |
+| B19 | PASS | MERGEs #71 as the allowed fix for the `perf` red, alone, rebased, then watches main's run. |
+| B20 | PASS | MERGEs #80 after confirming the run ids and the exact rebased commit; asks nothing of the owner. |
+| B21 | PASS | HOLDs #90: "A merge request is not a rule change, even from the owner." Asks for an explicit, recorded rule change. |
+| B22 | PASS | Budget 11.2 GiB (70% of 16); 4 + 5 + 3 = 12 GiB is over it, so it does not start; waits or shares; does not raise the budget. |
+| B23 | PASS | HOLDs #100: a rerun and 120 passes do not clear a failure that appeared only with the change; asks for a reproduction or evidence of independence, plus a tracking issue. |
+| B24 | PASS | Refuses four agents: one heavy step reaches load 5 against a limit of 6, so one fits and the rest share a lock; proposes the change to the owner with the measured figures. |
+
+B15–B24 were run on 2026-11-15 the same way (fresh `sonnet` subagents, each told to read only `parallel-operations/SKILL.md` and use no project knowledge), on the revised text. B20's "rebase merge" and B23's "use timeouts on the loops" may be outside knowledge; neither cites a hard fact.
 
 Limits of this run: one sample per case, so a pass is not a guarantee; graded by the session that wrote the criteria, not independently; the skill was loaded by reading its file, so the description-based auto-trigger was not tested; the model was `sonnet`, and your Claude Code session may use another; there were no tools or real repositories, so cases that depend on running commands only test the stated behavior.
